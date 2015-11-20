@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:divider="@drawable/divider">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/textViewNumber"
+                android:layout_width="40dp"
+                android:layout_height="fill_parent"
+                android:gravity="center_horizontal|center_vertical"
+                android:textSize="15sp"
+                android:text="56"
+                android:textColor="@color/primary_text"/>
+
+            <ImageView
+                android:id="@+id/imageViewOpponentAvatar"
+                android:src="@drawable/user"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginLeft="7dp"
+                android:layout_marginRight="7dp"/>
+
+            <TextView
+                android:id="@+id/textViewName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@+id/label"
+                android:textSize="15sp"
+                android:textColor="@color/primary_text" >
+            </TextView>
+
+            <TextView
+                android:id="@+id/textViewRank"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:gravity="right|center"
+                android:textSize="15sp"
+                android:text="47"
+                android:textColor="@color/dark_primary" />
+
+        </LinearLayout>
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"/>
+
+    </LinearLayout>
+
+
+</LinearLayout>

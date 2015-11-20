@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.saken2316.entalapp" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="com.example.troulvaille.permission.C2D_MESSAGE" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <application
+        android:name="com.ent.saken2316.entalapp.MyApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/logo"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:screenOrientation="portrait"
+        android:theme="@style/AppTheme" >
+
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/com_facebook_sdk_AppId" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyBcgNGFRtyMYt_sfK9MROFE5WqK3-LQsFs" />
+
+        <activity
+            android:name="com.ent.saken2316.entalapp.MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
+        <activity
+            android:name="com.vk.sdk.VKServiceActivity"
+            android:label="ServiceActivity"
+            android:theme="@style/VK.Transparent" />
+        <activity
+            android:name="com.ent.saken2316.entalapp.CategoriesActivity"
+            android:label="@string/title_activity_categories"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ChooseOpponentActivity"
+            android:label="@string/title_activity_choose_opponent"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.GameActivity"
+            android:label="@string/title_activity_game"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.LoginActivity"
+            android:label="@string/title_activity_login"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ProfileActivity"
+            android:label="@string/title_activity_profile"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.RegistrationActivity"
+            android:label="@string/title_activity_registration"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ResultActivity"
+            android:label="@string/title_activity_result"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ResultsListActivity"
+            android:label="@string/title_activity_results_list"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ThrobberActivity"
+            android:label="@string/title_activity_throbber"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.FriendsActivity"
+            android:label="@string/title_activity_friends"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.RegistrationSecondActivity"
+            android:label="@string/title_activity_registration_second"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.RankingActivity"
+            android:label="@string/title_activity_ranking"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.InfoActivity"
+            android:label="@string/title_activity_info" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.ReadyToPlayActivity"
+            android:label="@string/title_activity_ready_to_play" >
+        </activity>
+        <activity
+            android:name="com.ent.saken2316.entalapp.SearchActivity"
+            android:label="@string/title_activity_search" >
+        </activity>
+
+        <receiver
+            android:name="com.ent.saken2316.entalapp.GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+
+                <category android:name="com.example.troulvaille" />
+            </intent-filter>
+        </receiver>
+        <service android:name="com.ent.saken2316.entalapp.GCMNotificationIntentService"></service>
+    </application>
+
+</manifest>
