@@ -18,7 +18,6 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
@@ -55,11 +54,11 @@ public class ServiceHandler {
             // http client
             HttpParams httpParams = new BasicHttpParams();
             httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-            if (method == POST || method == GET){
-
-                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
-                HttpConnectionParams.setSoTimeout(httpParams, 5000);
-            }
+//            if (method == POST || method == GET){
+//
+//                HttpConnectionParams.setConnectionTimeout(httpParams, 1000);
+//                HttpConnectionParams.setSoTimeout(httpParams, 1000);
+//            }
             DefaultHttpClient httpClient = new DefaultHttpClient(httpParams);
             HttpEntity httpEntity = null;
             HttpResponse httpResponse = null;

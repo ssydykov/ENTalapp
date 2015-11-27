@@ -36,8 +36,8 @@ public class RankingListAdapter extends ArrayAdapter<Person> {
         // Product object
         Person person = getItem(position);
 
-        TextView stand = (TextView) convertView.findViewById(R.id.textViewNumber);
-        stand.setText(person.getPosition());
+//        TextView stand = (TextView) convertView.findViewById(R.id.textViewNumber);
+//        stand.setText(person.getPosition());
 
         // show image
         ImageView imageView = (ImageView)convertView.findViewById(R.id.imageViewOpponentAvatar);

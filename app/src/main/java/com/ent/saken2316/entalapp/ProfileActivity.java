@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -84,7 +85,7 @@ public class ProfileActivity extends ActionBarActivity {
     JSONObject message = null;
     JSONArray questionsJSON = null;
 
-    String gameID, opponentName, opponentAvatar, opponentPoint;
+    String gameID, opponentName, opponentAvatar, opponentPoint, jsonStr;
     String answer1[], answer2[], answer3[], answer4[], questions[];
     int right_answer[];
 
@@ -92,11 +93,12 @@ public class ProfileActivity extends ActionBarActivity {
     Toolbar toolbar;
     Context context;
     ImageView imageViewAvatar;
+    Button updateButton1, updateButton2;
     TextView textViewLevel, username, textViewGames, textView1, textView2;
     ListView listViewRank, listViewResults;
     ProgressDialog pDialog;
     ProgressBar progressBar1, progressBar2;
-    Boolean success = false, isInternet;
+    Boolean success = false;
     int DIALOG_CHALLENGE = 1;
     String token, sessionId, answer;
     Person profile;
@@ -109,7 +111,6 @@ public class ProfileActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
         context = getApplicationContext();
-        isInternet = isNetworkAvailable();
 
         // Intent values:
         intent = getIntent();
@@ -127,6 +128,8 @@ public class ProfileActivity extends ActionBarActivity {
         listViewResults = (ListView) findViewById(R.id.listViewGames);
         textView1 = (TextView) findViewById(R.id.textView1);
         textView2 = (TextView) findViewById(R.id.textView2);
+        updateButton1 = (Button) findViewById(R.id.updateButton1);
+        updateButton2 = (Button) findViewById(R.id.updateButton2);
 
         // Create user preferences - token and session id:
         userPreferencesBuilder();
@@ -147,6 +150,24 @@ public class ProfileActivity extends ActionBarActivity {
 
         // Tabs - My Games and Rating
         tabsBuilder();
+
+        // Update buttons:
+        // 1)
+        updateButton1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new GetMyGames().execute();
+                updateButton1.setVisibility(View.INVISIBLE);
+            }
+        });
+        // 2)
+        updateButton2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new GetRanking().execute();
+                updateButton2.setVisibility(View.INVISIBLE);
+            }
+        });
 
         // Get Profile:
         new GetProfile().execute();
@@ -353,15 +374,18 @@ public class ProfileActivity extends ActionBarActivity {
             ServiceHandler sh = new ServiceHandler();
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
                     null, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
-            JsonElement jsonElement = new JsonParser().parse(jsonStr);
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
-            jsonObject = jsonObject.getAsJsonObject("message");
+            if (jsonStr != null) {
 
-            Gson gson = new Gson();
-            profile = gson.fromJson(jsonObject, Person.class);
+                JsonElement jsonElement = new JsonParser().parse(jsonStr);
+                JsonObject jsonObject = jsonElement.getAsJsonObject();
+                jsonObject = jsonObject.getAsJsonObject("message");
+
+                Gson gson = new Gson();
+                profile = gson.fromJson(jsonObject, Person.class);
+            }
 
             return null;
         }
@@ -369,20 +393,23 @@ public class ProfileActivity extends ActionBarActivity {
             super.onPostExecute(result);
             setRefreshActionButtonState(false);
 
-            username.setText(profile.getFirstName() + " " + profile.getLastName());
-            Glide.with(context)
-                    .load(profile.getAvatar())
-                    .bitmapTransform(new CropCircleTransformation(context))
-                    .into(imageViewAvatar);
-            textViewLevel.setText(getResources().getString(R.string.rank) + " " + profile.getTotal_points());
+            if (jsonStr != null){
 
-            SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString("first_name", profile.getFirstName());
-            editor.putString("last_name", profile.getLastName());
-            editor.putString("avatar", profile.getAvatar());
-            editor.putString("total", profile.getTotal_points());
-            editor.apply();
+                username.setText(profile.getFirstName() + " " + profile.getLastName());
+                Glide.with(context)
+                        .load(profile.getAvatar())
+                        .bitmapTransform(new CropCircleTransformation(context))
+                        .into(imageViewAvatar);
+                textViewLevel.setText(getResources().getString(R.string.rank) + " " + profile.getTotal_points());
+
+                SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("first_name", profile.getFirstName());
+                editor.putString("last_name", profile.getLastName());
+                editor.putString("avatar", profile.getAvatar());
+                editor.putString("total", profile.getTotal_points());
+                editor.apply();
+            }
         }
 
     }
@@ -405,10 +432,11 @@ public class ProfileActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("size", "10"));
             String[] arrayListResponse = sh.makeServiceCall(url3, ServiceHandler.POST,
                     params, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
-            resultsList = parseJson(jsonStr);
+            if (jsonStr != null)
+                resultsList = parseJson(jsonStr);
 
             return null;
         }
@@ -416,10 +444,17 @@ public class ProfileActivity extends ActionBarActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            listViewResults.setVisibility(View.VISIBLE);
-            progressBar1.setVisibility(View.INVISIBLE);
-            textView1.setVisibility(View.INVISIBLE);
-            if (!resultsList.isEmpty()){
+            if (jsonStr == null){
+
+                updateButton1.setVisibility(View.VISIBLE);
+                textView1.setVisibility(View.VISIBLE);
+                textView1.setText("Bad internet connection");
+            }
+            else if (!resultsList.isEmpty()){
+
+                listViewResults.setVisibility(View.VISIBLE);
+                progressBar1.setVisibility(View.INVISIBLE);
+                textView1.setVisibility(View.INVISIBLE);
 
                 textViewGames.setText(getResources().getString(R.string.games) + " " + Integer.toString(resultsList.size()));
 
@@ -440,8 +475,8 @@ public class ProfileActivity extends ActionBarActivity {
             else {
 
                 listViewResults.setVisibility(View.INVISIBLE);
-                textView1.setText("No Games");
                 textView1.setVisibility(View.VISIBLE);
+                textView1.setText("No Games");
                 textViewGames.setText(getResources().getString(R.string.games) + " 0");
             }
         }
@@ -463,10 +498,11 @@ public class ProfileActivity extends ActionBarActivity {
             ServiceHandler sh = new ServiceHandler();
             String[] arrayListResponse = sh.makeServiceCall(url2, ServiceHandler.GET,
                     null, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response rating: ", "> " + jsonStr);
 
-            rankList = parseJson(jsonStr);
+            if (jsonStr != null)
+                rankList = parseJson(jsonStr);
 
             return null;
         }
@@ -478,7 +514,13 @@ public class ProfileActivity extends ActionBarActivity {
             progressBar2.setVisibility(View.INVISIBLE);
             textView2.setVisibility(View.INVISIBLE);
 
-            if (!rankList.isEmpty()){
+            if (jsonStr == null){
+
+                updateButton2.setVisibility(View.VISIBLE);
+                textView2.setVisibility(View.VISIBLE);
+                textView2.setText("Bad internet connection");
+            }
+            else if (!rankList.isEmpty()){
 
                 listViewRank.setAdapter(new RankingListAdapter(ProfileActivity.this, rankList));
             }
@@ -699,8 +741,8 @@ public class ProfileActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        isInternet = isNetworkAvailable();
-        if (id == R.id.action_refresh && isInternet) {
+
+        if (id == R.id.action_refresh && isNetworkAvailable()) {
 
 //            new GetProfile().execute();
             new GetMyGames().execute();

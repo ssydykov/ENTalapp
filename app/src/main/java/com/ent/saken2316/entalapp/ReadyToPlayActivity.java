@@ -71,7 +71,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
 
         if (isNotification){
 
-            SharedPreferences mPrefs = getSharedPreferences("label", 0);
+            SharedPreferences mPrefs = getSharedPreferences("user", 0);
             token = mPrefs.getString("token", "");
             sessionId = mPrefs.getString("sessionId", "");
             Log.e("Hello", "Notification");
