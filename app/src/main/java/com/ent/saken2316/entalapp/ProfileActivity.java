@@ -444,6 +444,7 @@ public class ProfileActivity extends ActionBarActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
+            progressBar1.setVisibility(View.INVISIBLE);
             if (jsonStr == null){
 
                 updateButton1.setVisibility(View.VISIBLE);
@@ -453,7 +454,6 @@ public class ProfileActivity extends ActionBarActivity {
             else if (!resultsList.isEmpty()){
 
                 listViewResults.setVisibility(View.VISIBLE);
-                progressBar1.setVisibility(View.INVISIBLE);
                 textView1.setVisibility(View.INVISIBLE);
 
                 textViewGames.setText(getResources().getString(R.string.games) + " " + Integer.toString(resultsList.size()));

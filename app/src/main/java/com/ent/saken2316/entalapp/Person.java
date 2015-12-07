@@ -61,6 +61,16 @@ public class Person {
     @SerializedName("city")
     private String city;
 
+    @SerializedName("user_id")
+    private String userId;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getCity() {
         return city;

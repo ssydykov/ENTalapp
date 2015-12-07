@@ -26,6 +26,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -60,14 +61,14 @@ public class FriendsActivity extends AppCompatActivity {
     private static String url3 = "http://env-3315080.j.dnr.kz/mainapp/search/";
 
     private boolean isSearchOpened = false;
-    String token, sessionId, searchValue, friendId;
-    Boolean isInternet;
+    String token, sessionId, searchValue, friendId, jsonStr;
     int DIALOG_INVITE = 1;
 
     Intent intent;
     Context context;
     Toolbar toolbar;
     TextView textView;
+    Button updateButton;
     MenuItem searchAction;
     MenuItem refreshAction;
     EditText edtSeach;
@@ -81,7 +82,6 @@ public class FriendsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friends);
-        isInternet = isNetworkAvailable();
         context = getApplicationContext();
 
         intent = getIntent();
@@ -91,6 +91,15 @@ public class FriendsActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         textView = (TextView) findViewById(R.id.textView);
         listViewFriends = (ListView) findViewById(R.id.listViewFriends);
+
+        updateButton = (Button) findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new GetMyFriends().execute();
+                updateButton.setVisibility(View.INVISIBLE);
+            }
+        });
 
         // Create tool bar:
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -236,10 +245,11 @@ public class FriendsActivity extends AppCompatActivity {
             ServiceHandler sh = new ServiceHandler();
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
                     null, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
-            friendsList = parseJson(jsonStr);
+            if (jsonStr != null)
+                friendsList = parseJson(jsonStr);
 
             return null;
         }
@@ -251,7 +261,14 @@ public class FriendsActivity extends AppCompatActivity {
             listViewFriends.setVisibility(View.VISIBLE);
             setRefreshActionButtonState(false);
 
-            if (friendsList != null) {
+            if (jsonStr == null){
+
+                listViewFriends.setVisibility(View.INVISIBLE);
+                updateButton.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("Bad internet connection");
+            }
+            else if (friendsList != null) {
 
                 listViewFriends.setAdapter(new FriendsListAdapter(FriendsActivity.this, friendsList));
 
@@ -262,6 +279,12 @@ public class FriendsActivity extends AppCompatActivity {
                         showDialog(DIALOG_INVITE);
                     }
                 });
+            }
+            else {
+
+                listViewFriends.setVisibility(View.INVISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("No Friends");
             }
         }
     }
@@ -382,11 +405,11 @@ public class FriendsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh && isInternet) {
+        if (id == R.id.action_refresh && isNetworkAvailable()) {
 
             new GetMyFriends().execute();
             return true;
-        } else if (id == R.id.action_search && isInternet){
+        } else if (id == R.id.action_search && isNetworkAvailable()){
 
             handleMenuSearch();
             return true;
@@ -414,6 +437,7 @@ public class FriendsActivity extends AppCompatActivity {
     protected void handleMenuSearch(){
         ActionBar action = getSupportActionBar(); //get the actionbar
 
+        textView.setVisibility(View.INVISIBLE);
         if(isSearchOpened){ //test if the search is open
 
             action.setDisplayShowCustomEnabled(false); //disable a custom view inside the actionbar
@@ -475,17 +499,18 @@ public class FriendsActivity extends AppCompatActivity {
     private void doSearch() {
 
         handleMenuSearch();
-        new GetMyFriendsSearch().execute();
+        if (!searchValue.isEmpty() && isNetworkAvailable()){
+
+            listViewFriends.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            new GetMyFriendsSearch().execute();
+        }
+        else {
+
+        }
     }
     private class GetMyFriendsSearch extends AsyncTask<String, String, String>{
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            listViewFriends.setVisibility(View.INVISIBLE);
-            progressBar.setVisibility(View.VISIBLE);
-        }
         @Override
         protected String doInBackground(String... args) {
 
@@ -513,7 +538,14 @@ public class FriendsActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            if (searchList != null) {
+            if (jsonStr == null){
+
+                listViewFriends.setVisibility(View.INVISIBLE);
+                updateButton.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("Bad internet connection");
+            }
+            else if (searchList != null) {
 
                 listViewFriends.setAdapter(new FriendsListAdapter(FriendsActivity.this, searchList));
                 progressBar.setVisibility(View.INVISIBLE);
@@ -522,10 +554,16 @@ public class FriendsActivity extends AppCompatActivity {
                 listViewFriends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        friendId = searchList.get(position).getId();
+                        friendId = searchList.get(position).getUserId();
                         showDialog(DIALOG_INVITE);
                     }
                 });
+            }
+            else {
+
+                progressBar.setVisibility(View.INVISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("No Results");
             }
         }
     }

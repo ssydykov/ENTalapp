@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -21,6 +20,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -56,7 +56,8 @@ public class ResultsListActivity extends ActionBarActivity {
     ProgressDialog pDialog;
     TextView textView;
     String token, sessionId;
-    Bitmap bitmap[];
+    String jsonStr;
+    Button updateButton;
 
     private static String url = "http://env-3315080.j.dnr.kz/mainapp/getplayedgames/";
     private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/logout/";
@@ -88,13 +89,17 @@ public class ResultsListActivity extends ActionBarActivity {
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
+        updateButton = (Button) findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new GetMyGames().execute();
+                updateButton.setVisibility(View.INVISIBLE);
+            }
+        });
+
         // Get Played Games From Server:
-        if (isNetworkAvailable())
-            new GetMyGames().execute();
-        else
-            textView.setText(getResources().getString(R.string.oops));
-            textView.setVisibility(View.VISIBLE);
-            listViewResults.setVisibility(View.INVISIBLE);
+        new GetMyGames().execute();
 
     }
 
@@ -227,10 +232,11 @@ public class ResultsListActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("size", "50"));
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
                     params, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
-            resultsList = parseJson(jsonStr);
+            if (jsonStr != null)
+                resultsList = parseJson(jsonStr);
 
             return null;
         }
@@ -238,15 +244,20 @@ public class ResultsListActivity extends ActionBarActivity {
         protected void onPostExecute(final String result) {
             super.onPostExecute(result);
             progressBar.setVisibility(View.INVISIBLE);
-            textView.setVisibility(View.INVISIBLE);
-            listViewResults.setVisibility(View.VISIBLE);
             setRefreshActionButtonState(false);
 
-            if (resultsList != null) {
+            if (jsonStr == null){
 
-                listViewResults = (ListView) findViewById(R.id.listViewGames);
+                updateButton.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("Bad internet connection");
+            }
+            else if (resultsList != null){
+
+                listViewResults.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.INVISIBLE);
+
                 listViewResults.setAdapter(new ResultsListAdapter(ResultsListActivity.this, resultsList));
-
                 listViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -259,6 +270,12 @@ public class ResultsListActivity extends ActionBarActivity {
                         startActivity(intent);
                     }
                 });
+            }
+            else {
+
+                listViewResults.setVisibility(View.INVISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("No Games");
             }
         }
     }

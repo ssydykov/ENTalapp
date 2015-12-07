@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
     tools:context="com.ent.saken2316.entalapp.FriendsActivity">
@@ -17,9 +18,9 @@
     <FrameLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_marginTop="?attr/actionBarSize"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="?attr/actionBarSize">
+        android:layout_marginRight="10dp">
 
         <ProgressBar
             style="?android:progressBarStyleSmall"
@@ -39,12 +40,24 @@
             android:id="@+id/textView"
             android:text="@string/getting_friends"
             android:textColor="@color/secondary_text"/>
+        <Button
+            android:id="@+id/updateButton"
+            android:layout_width="fill_parent"
+            android:layout_height="45dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="145dp"
+            android:layout_gravity="center"
+            android:visibility="invisible"
+            android:textSize="12sp"
+            android:text="@string/update"
+            android:background="@drawable/button"
+            android:textColor="@color/white"/>
         <ListView
             android:id="@+id/listViewFriends"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:background="@color/white"
-            android:divider="@drawable/divider">
+            android:background="@color/white">
         </ListView>
 
     </FrameLayout>

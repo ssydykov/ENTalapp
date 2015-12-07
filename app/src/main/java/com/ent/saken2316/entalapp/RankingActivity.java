@@ -20,7 +20,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.saken2316.entalapp.R;
@@ -53,7 +56,11 @@ public class RankingActivity extends AppCompatActivity {
     Intent intent;
     Context context;
     Boolean isInternet;
+    ProgressBar progressBar;
     ProgressDialog pDialog;
+    String jsonStr;
+    Button updateButton;
+    TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +80,17 @@ public class RankingActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        textView = (TextView) findViewById(R.id.textView);
+        updateButton = (Button) findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new GetRanking().execute();
+                updateButton.setVisibility(View.INVISIBLE);
+            }
+        });
 
         // Create status bar:
         toolbarBuilder();
@@ -201,7 +219,10 @@ public class RankingActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            setRefreshActionButtonState(true);
+            progressBar.setVisibility(View.VISIBLE);
+            textView.setText("Getting rating list");
+            textView.setVisibility(View.VISIBLE);
+            listViewRank.setVisibility(View.INVISIBLE);
         }
         @Override
         protected String doInBackground(String... args) {
@@ -209,19 +230,30 @@ public class RankingActivity extends AppCompatActivity {
             ServiceHandler sh = new ServiceHandler();
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
                     null, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
-            rankList = parseJson(jsonStr);
+            if (jsonStr != null)
+                rankList = parseJson(jsonStr);
 
             return null;
         }
 
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
+            progressBar.setVisibility(View.INVISIBLE);
             setRefreshActionButtonState(false);
 
-            if (!rankList.isEmpty()){
+            if (jsonStr == null){
+
+                updateButton.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("Bad internet connection");
+            }
+            else if (!rankList.isEmpty()){
+
+                listViewRank.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.INVISIBLE);
 
                 listViewRank.setAdapter(new RankingListAdapter(RankingActivity.this, rankList));
             }

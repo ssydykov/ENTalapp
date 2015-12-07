@@ -11,7 +11,7 @@ android {
         applicationId "com.ent.saken2316.entalapp"
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 25
+        versionCode 27
         versionName "1.0"
     }
     buildTypes {
