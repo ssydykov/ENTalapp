@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Notification;
 
 import android.app.Activity;
 import android.content.ComponentName;

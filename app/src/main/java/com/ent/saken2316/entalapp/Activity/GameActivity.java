@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
 import org.apache.http.NameValuePair;

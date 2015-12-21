@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
 import org.apache.http.NameValuePair;
@@ -27,18 +28,17 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RegistrationSecondActivity extends ActionBarActivity {
+public class LoginActivity extends ActionBarActivity {
 
-    String email, password, firstName, lastName, token, sessionId;
-    EditText editTextFirstName, editTextLastName;
-    Button btnSignUp;
-    Intent intent;
+    Button btnLogin;
+    EditText editTextUserName, editTextPassword;
+    String userName, password, token, sessionId;
     boolean success;
 
     private ProgressDialog pDialog;
 
     // URL to get contacts JSON
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/registration/";
+    private static String url = "http://env-3315080.j.dnr.kz/mainapp/login/";
 
     // JSON Node names
     private static final String TAG_MESSAGE = "message";
@@ -48,11 +48,13 @@ public class RegistrationSecondActivity extends ActionBarActivity {
     // URL to get contacts JSON
     String message_text = "";
     JSONObject messages = null;
+    Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_registration_second);
+        setContentView(R.layout.activity_login);
+        context = getApplicationContext();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -70,38 +72,33 @@ public class RegistrationSecondActivity extends ActionBarActivity {
             // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         }
-        intent = getIntent();
-        email = intent.getStringExtra("email");
-        password = intent.getStringExtra("password");
-        Log.e("email", email);
-        Log.e("password", password);
-
-        btnSignUp = (Button)findViewById(R.id.btnSignUp);
-        btnSignUp.setOnClickListener(new View.OnClickListener() {
+        btnLogin = (Button)findViewById(R.id.btnLogin);
+        btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                editTextPassword = (EditText)findViewById(R.id.editTextPassword);
+                editTextUserName = (EditText)findViewById(R.id.editTextUserName);
+                userName = editTextUserName.getText().toString();
+                password = editTextPassword.getText().toString();
 
-                editTextFirstName = (EditText)findViewById(R.id.editTextFirstName);
-                editTextLastName = (EditText)findViewById(R.id.editTextLastName);
-                firstName = editTextFirstName.getText().toString();
-                lastName = editTextLastName.getText().toString();
-
-                Context context = getApplicationContext();
-                new CreateNewUser(context).execute();
+                new Login(context).execute();
             }
         });
     }
 
-    private class CreateNewUser extends AsyncTask<String, String, String> {
+    private class Login extends AsyncTask<String, String, String> {
 
         Context context;
-        private CreateNewUser(Context _context){ this.context = _context; }
+
+        private Login(Context _context){
+            this.context = _context;
+        }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             // Showing progress dialog
-            pDialog = new ProgressDialog(RegistrationSecondActivity.this);
+            pDialog = new ProgressDialog(LoginActivity.this);
             pDialog.setMessage(getResources().getString(R.string.wait_profile));
             pDialog.setCancelable(false);
             pDialog.show();
@@ -114,30 +111,24 @@ public class RegistrationSecondActivity extends ActionBarActivity {
 
             // Building Parameters
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("email", email));
             params.add(new BasicNameValuePair("password", password));
-            params.add(new BasicNameValuePair("first_name", firstName));
-            params.add(new BasicNameValuePair("last_name", lastName));
 
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.SIGNUP,
-                    params, null, null);
+            params.add(new BasicNameValuePair("username", userName));
+            String[] arrayListResponse = sh.makeServiceCall(url,
+                    ServiceHandler.SIGNIN, params, null, null);
 
             token = arrayListResponse[0];
             sessionId = arrayListResponse[1];
             String jsonStr = arrayListResponse[2];
-
             Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null) {
                 try {
                     JSONObject jsonObj = new JSONObject(jsonStr);
 
-                    // Getting JSON Array node
                     messages = jsonObj.getJSONObject(TAG_MESSAGE);
-
                     message_text = messages.getString(TAG_TEXT);
                     success = messages.getBoolean(TAG_SUCCESS);
-                    Log.e("Success", Boolean.toString(success));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -165,16 +156,18 @@ public class RegistrationSecondActivity extends ActionBarActivity {
                 Bundle b = new Bundle();
                 b.putString("token", token);
                 b.putString("sessionId", sessionId);
-                b.putString("status", "APP");
+                Log.e("token", token);
+                Log.e("session", sessionId);
                 intent.putExtras(b);
                 context.startActivity(intent);
             }
         }
     }
 
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_registration, menu);
+        getMenuInflater().inflate(R.menu.menu_login, menu);
         return true;
     }
 
@@ -193,5 +186,6 @@ public class RegistrationSecondActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 }
+
 
 

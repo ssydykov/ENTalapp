@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.content.Intent;
 import android.os.Build;

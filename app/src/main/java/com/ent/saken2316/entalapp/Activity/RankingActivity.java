@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -9,7 +9,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -24,7 +24,11 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Model.Person;
+import com.ent.saken2316.entalapp.Adapter.RankingListAdapter;
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -39,34 +43,37 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
-
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ResultsListActivity extends ActionBarActivity {
+public class RankingActivity extends AppCompatActivity {
 
-    ListView listViewResults;
-    Intent intent;
+    private static String url = "http://env-3315080.j.dnr.kz/mainapp/getranking/";
+    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/logout/";
+
+    String token, sessionId;
+    List<Person> rankList;
+
+    ListView listViewRank;
     Toolbar toolbar;
-    List<Person> resultsList;
+    Intent intent;
+    Context context;
+    Boolean isInternet;
     ProgressBar progressBar;
     ProgressDialog pDialog;
-    TextView textView;
-    String token, sessionId;
     String jsonStr;
     Button updateButton;
-
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/getplayedgames/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/logout/";
+    TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_results_list);
+        setContentView(R.layout.activity_ranking);
+        isInternet = isNetworkAvailable();
+        context = getApplicationContext();
 
+        // Values
+        listViewRank = (ListView) findViewById(R.id.listViewRank);
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
@@ -77,30 +84,25 @@ public class ResultsListActivity extends ActionBarActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // Create toolbar:
-        toolbarBuilder();
-
-        // Create drawer:
-        drawerBuilder();
-
-        listViewResults = (ListView) findViewById(R.id.listViewGames);
-
-        textView = (TextView) findViewById(R.id.textView);
-
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
-
+        textView = (TextView) findViewById(R.id.textView);
         updateButton = (Button) findViewById(R.id.updateButton);
         updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new GetMyGames().execute();
+                new GetRanking().execute();
                 updateButton.setVisibility(View.INVISIBLE);
             }
         });
 
-        // Get Played Games From Server:
-        new GetMyGames().execute();
+        // Create status bar:
+        toolbarBuilder();
 
+        // Navigation Drawer:
+        drawerBuilder();
+
+        // Get rating:
+        new GetRanking().execute();
     }
 
     private boolean isNetworkAvailable() {
@@ -135,7 +137,7 @@ public class ResultsListActivity extends ActionBarActivity {
                 .withToolbar(toolbar)
                 .withActionBarDrawerToggle(true)
                 .withHeader(R.layout.drawer_header)
-                .withSelectedItem(2)
+                .withSelectedItem(1)
                 .addDrawerItems(
                         new PrimaryDrawerItem().withName(R.string.drawer_item_user).withIcon(FontAwesome.Icon.faw_user),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_raiting).withIcon(FontAwesome.Icon.faw_list),
@@ -162,18 +164,18 @@ public class ResultsListActivity extends ActionBarActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        } else if (position == 2) {
+                        } else if (position == 4) {
                             Context context = getApplicationContext();
-                            Intent intent = new Intent(context, RankingActivity.class);
+                            Intent intent = new Intent(context, FriendsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             Bundle b = new Bundle();
                             b.putString("token", token);
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        }  else if (position == 4) {
+                        }  else if (position == 3) {
                             Context context = getApplicationContext();
-                            Intent intent = new Intent(context, FriendsActivity.class);
+                            Intent intent = new Intent(context, ResultsListActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             Bundle b = new Bundle();
                             b.putString("token", token);
@@ -199,6 +201,7 @@ public class ResultsListActivity extends ActionBarActivity {
                 .build();
     }
 
+
     private List<Person> parseJson(String array){
 
         JsonElement jelement = new JsonParser().parse(array);
@@ -213,35 +216,33 @@ public class ResultsListActivity extends ActionBarActivity {
 
         return resultsModels;
     }
-    private class GetMyGames extends AsyncTask<String, String, String> {
+
+    private class GetRanking extends AsyncTask<String, String, String> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            // Showing progress dialog
             progressBar.setVisibility(View.VISIBLE);
-            textView.setText(getResources().getString(R.string.connection_to_games));
+            textView.setText("Getting rating list");
             textView.setVisibility(View.VISIBLE);
-            listViewResults.setVisibility(View.INVISIBLE);
+            listViewRank.setVisibility(View.INVISIBLE);
         }
         @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("size", "50"));
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
-                    params, token, sessionId);
+            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
+                    null, token, sessionId);
             jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null)
-                resultsList = parseJson(jsonStr);
+                rankList = parseJson(jsonStr);
 
             return null;
         }
 
-        protected void onPostExecute(final String result) {
+        protected void onPostExecute(String result) {
             super.onPostExecute(result);
             progressBar.setVisibility(View.INVISIBLE);
             setRefreshActionButtonState(false);
@@ -252,40 +253,23 @@ public class ResultsListActivity extends ActionBarActivity {
                 textView.setVisibility(View.VISIBLE);
                 textView.setText("Bad internet connection");
             }
-            else if (resultsList != null){
+            else if (!rankList.isEmpty()){
 
-                listViewResults.setVisibility(View.VISIBLE);
+                listViewRank.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.INVISIBLE);
 
-                listViewResults.setAdapter(new ResultsListAdapter(ResultsListActivity.this, resultsList));
-                listViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        Object activity = ResultActivity.class;
-                        Intent intent = new Intent(getApplicationContext(),
-                                (Class<?>) activity);
-                        intent.putExtra("gameId", resultsList.get(position).getGameId());
-                        intent.putExtra("token", token);
-                        intent.putExtra("sessionId", sessionId);
-                        startActivity(intent);
-                    }
-                });
-            }
-            else {
-
-                listViewResults.setVisibility(View.INVISIBLE);
-                textView.setVisibility(View.VISIBLE);
-                textView.setText("No Games");
+                listViewRank.setAdapter(new RankingListAdapter(RankingActivity.this, rankList));
             }
         }
     }
+
     private class Logout extends AsyncTask<String, String, String> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             // Showing progress dialog
-            pDialog = new ProgressDialog(ResultsListActivity.this);
+            pDialog = new ProgressDialog(RankingActivity.this);
             pDialog.setMessage("Logout, Please wait...");
             pDialog.setCancelable(false);
             pDialog.show();
@@ -307,6 +291,7 @@ public class ResultsListActivity extends ActionBarActivity {
             if (pDialog.isShowing())
                 pDialog.dismiss();
 
+
             SharedPreferences mPrefs = getSharedPreferences("user", 0);
             SharedPreferences.Editor mEditor = mPrefs.edit();
             mEditor.clear().commit();
@@ -322,35 +307,39 @@ public class ResultsListActivity extends ActionBarActivity {
         }
     }
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        this.optionsMenu = menu;
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_ranking, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
             Object activity = ProfileActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("token", token);
             intent.putExtra("sessionId", sessionId);
             startActivity(intent);
+
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
     private Menu optionsMenu;
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        this.optionsMenu = menu;
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_results_list, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh) {
-            setRefreshActionButtonState(true);
-            new GetMyGames().execute();
+        if (id == R.id.action_refresh && isInternet) {
+
+            new GetRanking().execute();
             return true;
+        } else {
+            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
+                    Toast.LENGTH_SHORT).show();
         }
 
         return super.onOptionsItemSelected(item);
@@ -368,4 +357,5 @@ public class ResultsListActivity extends ActionBarActivity {
             }
         }
     }
+
 }

@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
 import org.apache.http.NameValuePair;

@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -35,6 +35,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Model.Person;
+import com.ent.saken2316.entalapp.Adapter.RankingListAdapter;
+import com.ent.saken2316.entalapp.Adapter.ResultsListAdapter;
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;

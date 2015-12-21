@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Notification;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
+import com.ent.saken2316.entalapp.Activity.ReadyToPlayActivity;
 import com.example.saken2316.entalapp.R;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 

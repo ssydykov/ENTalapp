@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Adapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Model.Person;
 import com.example.saken2316.entalapp.R;
 
 import java.util.List;

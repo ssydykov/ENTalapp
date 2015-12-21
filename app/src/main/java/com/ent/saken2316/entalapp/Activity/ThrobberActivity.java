@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
 import org.apache.http.NameValuePair;
@@ -76,6 +77,29 @@ public class ThrobberActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_throbber);
 
+        context = getApplicationContext();
+
+        handler = new Handler();
+
+        intent = getIntent();
+        token = intent.getStringExtra("token");
+        sessionId = intent.getStringExtra("sessionId");
+        categoryId = intent.getIntExtra("categoryId", 0);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.VISIBLE);
+        throbberText = (TextView) findViewById(R.id.throbberText);
+        button1 = (Button) findViewById(R.id.btnBot);
+        button2 = (Button) findViewById(R.id.btnStop);
+        button1.setVisibility(View.INVISIBLE);
+        button2.setVisibility(View.INVISIBLE);
+
+        createStatusBar();
+
+        new GetQuestions(context, url).execute();
+    }
+
+    private void createStatusBar(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
             // clear FLAG_TRANSLUCENT_STATUS flag:
@@ -92,22 +116,6 @@ public class ThrobberActivity extends ActionBarActivity {
             // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         }
-        handler = new Handler();
-        intent = getIntent();
-        token = intent.getStringExtra("token");
-        sessionId = intent.getStringExtra("sessionId");
-        categoryId = intent.getIntExtra("categoryId", 0);
-
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        progressBar.setVisibility(View.VISIBLE);
-        throbberText = (TextView) findViewById(R.id.throbberText);
-        button1 = (Button) findViewById(R.id.btnBot);
-        button2 = (Button) findViewById(R.id.btnStop);
-        button1.setVisibility(View.INVISIBLE);
-        button2.setVisibility(View.INVISIBLE);
-
-        context = getApplicationContext();
-        new GetQuestions(context, url).execute();
     }
 
     private class GetQuestions extends AsyncTask<String, String, String> {

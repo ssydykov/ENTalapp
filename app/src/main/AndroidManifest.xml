@@ -18,7 +18,7 @@
         android:required="true" />
 
     <application
-        android:name="com.ent.saken2316.entalapp.MyApplication"
+        android:name="com.ent.saken2316.entalapp.Model.MyApplication"
         android:allowBackup="true"
         android:icon="@drawable/logo"
         android:label="@string/app_name"
@@ -37,7 +37,7 @@
             android:value="AIzaSyBcgNGFRtyMYt_sfK9MROFE5WqK3-LQsFs" />
 
         <activity
-            android:name="com.ent.saken2316.entalapp.MainActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
             <intent-filter>
@@ -57,80 +57,80 @@
             android:label="ServiceActivity"
             android:theme="@style/VK.Transparent" />
         <activity
-            android:name="com.ent.saken2316.entalapp.CategoriesActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.CategoriesActivity"
             android:label="@string/title_activity_categories"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ChooseOpponentActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ChooseOpponentActivity"
             android:label="@string/title_activity_choose_opponent"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.GameActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.GameActivity"
             android:label="@string/title_activity_game"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.LoginActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.LoginActivity"
             android:label="@string/title_activity_login"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ProfileActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ProfileActivity"
             android:label="@string/title_activity_profile"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.RegistrationActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.RegistrationActivity"
             android:label="@string/title_activity_registration"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ResultActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ResultActivity"
             android:label="@string/title_activity_result"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ResultsListActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ResultsListActivity"
             android:label="@string/title_activity_results_list"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ThrobberActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ThrobberActivity"
             android:label="@string/title_activity_throbber"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.FriendsActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.FriendsActivity"
             android:label="@string/title_activity_friends"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.RegistrationSecondActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.RegistrationSecondActivity"
             android:label="@string/title_activity_registration_second"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.RankingActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.RankingActivity"
             android:label="@string/title_activity_ranking"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.InfoActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.InfoActivity"
             android:label="@string/title_activity_info" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.ReadyToPlayActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.ReadyToPlayActivity"
             android:label="@string/title_activity_ready_to_play" >
         </activity>
         <activity
-            android:name="com.ent.saken2316.entalapp.SearchActivity"
+            android:name="com.ent.saken2316.entalapp.Activity.SearchActivity"
             android:label="@string/title_activity_search" >
         </activity>
 
         <receiver
-            android:name="com.ent.saken2316.entalapp.GcmBroadcastReceiver"
+            android:name="com.ent.saken2316.entalapp.Notification.GcmBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -139,7 +139,7 @@
                 <category android:name="com.example.troulvaille" />
             </intent-filter>
         </receiver>
-        <service android:name="com.ent.saken2316.entalapp.GCMNotificationIntentService"></service>
+        <service android:name="com.ent.saken2316.entalapp.Notification.GCMNotificationIntentService"></service>
     </application>
 
 </manifest>

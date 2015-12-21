@@ -1,4 +1,4 @@
-package com.ent.saken2316.entalapp;
+package com.ent.saken2316.entalapp.Activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,12 +19,14 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
 import org.apache.http.NameValuePair;
@@ -46,6 +48,7 @@ public class CategoriesActivity extends ActionBarActivity {
     Toolbar toolbar;
     String token, sessionId;
     ProgressBar progressBar;
+    Button updateButton;
     TextView textView;
 
     private static String url = "http://env-3315080.j.dnr.kz/mainapp/categories/";
@@ -70,17 +73,61 @@ public class CategoriesActivity extends ActionBarActivity {
     JSONArray categories = null;
 
     final String ATTRIBUTE_NAME_CATEGORY = "category";
-    String categoriesName[], friend_id = "", categoryId;
+    String categoriesName[], friend_id = "", categoryId, jsonStr;
     String opponentName, opponentPoint, gameId, opponentAvatar;
     String questions[], answer1[], answer2[], answer3[], answer4[];
     int right_answer[], categoriesId[];
-    Boolean isInternet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
-        isInternet = isNetworkAvailable();
+
+        intent = getIntent();
+        token = intent.getStringExtra("token");
+        sessionId = intent.getStringExtra("sessionId");
+        friend_id = intent.getStringExtra("friend_id");
+
+        toolbarBuilder();
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Object activity = ChooseOpponentActivity.class;
+                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra("token", token);
+                intent.putExtra("sessionId", sessionId);
+                startActivity(intent);
+            }
+        });
+
+        listView = (ListView) findViewById(R.id.listView);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        textView = (TextView) findViewById(R.id.textView);
+        updateButton = (Button) findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new GetCategories().execute();
+                updateButton.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        new GetCategories().execute();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+    private void toolbarBuilder(){
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -98,98 +145,6 @@ public class CategoriesActivity extends ActionBarActivity {
             // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         }
-
-        intent = getIntent();
-        token = intent.getStringExtra("token");
-        sessionId = intent.getStringExtra("sessionId");
-        friend_id = intent.getStringExtra("friend_id");
-
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Object activity = ChooseOpponentActivity.class;
-                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intent.putExtra("token", token);
-                intent.putExtra("sessionId", sessionId);
-                startActivity(intent);
-            }
-        });
-        SharedPreferences sharedPreferencesGames = getSharedPreferences("categories", 0);
-        String jsonStr = sharedPreferencesGames.getString("data", null);
-        listView = (ListView) findViewById(R.id.gridViewCategories);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        textView = (TextView) findViewById(R.id.textView);
-        if (jsonStr != null && !jsonStr.isEmpty()){
-            try {
-                JSONObject jsonObj = new JSONObject(jsonStr);
-
-                // Getting JSON Array node
-                categories = jsonObj.getJSONArray(TAG_MESSAGE);
-                categoriesName = new String[categories.length()];
-                categoriesId = new int[categories.length()];
-
-                // looping through All Contacts
-                for (int i = 0; i < categories.length(); i++) {
-                    JSONObject c = categories.getJSONObject(i);
-
-                    categoriesId[i] = c.getInt(TAG_ID);
-                    categoriesName[i] = c.getString(TAG_CATEGORY);
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
-                    categoriesName.length);
-            Map<String, Object> m;
-
-            for (int i = 0; i < categoriesName.length; i++) {
-                m = new HashMap<String, Object>();
-                m.put("id", Integer.toString(categoriesId[i]));
-                m.put(ATTRIBUTE_NAME_CATEGORY, categoriesName[i]);
-                data.add(m);
-            }
-
-            String[] from = { ATTRIBUTE_NAME_CATEGORY };
-            int[] to = { R.id.categoryName };
-
-            adapter = new SimpleAdapter(CategoriesActivity.this, data,
-                    R.layout.categories_item, from, to);
-            listView.setAdapter(adapter);
-
-            // Item selected:
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (friend_id != null && !friend_id.isEmpty()) {
-                        categoryId = Integer.toString(categoriesId[position]);
-                        new IWantToPlayWithFriend().execute();
-                    } else {
-                        Object activity = ThrobberActivity.class;
-                        Intent intent = new Intent(getApplicationContext(),
-                                (Class<?>) activity);
-                        intent.putExtra("categoryId", categoriesId[position]);
-                        intent.putExtra("token", token);
-                        intent.putExtra("sessionId", sessionId);
-                        startActivity(intent);
-                    }
-                }
-            });
-        }
-        else if (isInternet){
-            textView.setVisibility(View.VISIBLE);
-            progressBar.setVisibility(View.VISIBLE);
-            new GetCategories().execute();
-        }
-        else {
-            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
-                    Toast.LENGTH_SHORT).show();
-        }
     }
 
     private class GetCategories extends AsyncTask<String, String, String> {
@@ -198,6 +153,10 @@ public class CategoriesActivity extends ActionBarActivity {
         protected void onPreExecute() {
             super.onPreExecute();
             setRefreshActionButtonState(true);
+            progressBar.setVisibility(View.VISIBLE);
+            textView.setText(getResources().getString(R.string.getting_categories));
+            textView.setVisibility(View.VISIBLE);
+            listView.setVisibility(View.INVISIBLE);
         }
 
         @Override
@@ -206,7 +165,7 @@ public class CategoriesActivity extends ActionBarActivity {
             ServiceHandler sh = new ServiceHandler();
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
                     null, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
 
@@ -244,46 +203,57 @@ public class CategoriesActivity extends ActionBarActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             setRefreshActionButtonState(false);
-            textView.setVisibility(View.INVISIBLE);
             progressBar.setVisibility(View.INVISIBLE);
 
-            ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
-                    categoriesName.length);
-            Map<String, Object> m;
+            if (jsonStr == null){
 
-            for (int i = 0; i < categoriesName.length; i++) {
-                m = new HashMap<String, Object>();
-                m.put("id", Integer.toString(categoriesId[i]));
-                m.put(ATTRIBUTE_NAME_CATEGORY, categoriesName[i]);
-                data.add(m);
+                updateButton.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("Bad internet connection");
             }
+            else if (categories != null){
 
-            String[] from = { ATTRIBUTE_NAME_CATEGORY };
-            int[] to = { R.id.categoryName };
+                listView.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.INVISIBLE);
 
-            adapter = new SimpleAdapter(CategoriesActivity.this, data,
-                    R.layout.categories_item, from, to);
-            listView.setAdapter(adapter);
+                ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
+                        categoriesName.length);
+                Map<String, Object> m;
 
-            // Item selected:
-
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (friend_id != null && !friend_id.isEmpty()) {
-                        categoryId = Integer.toString(categoriesId[position]);
-                        new IWantToPlayWithFriend().execute();
-                    } else {
-                        Object activity = ThrobberActivity.class;
-                        Intent intent = new Intent(getApplicationContext(),
-                                (Class<?>) activity);
-                        intent.putExtra("categoryId", categoriesId[position]);
-                        intent.putExtra("token", token);
-                        intent.putExtra("sessionId", sessionId);
-                        startActivity(intent);
-                    }
+                for (int i = 0; i < categoriesName.length; i++) {
+                    m = new HashMap<String, Object>();
+                    m.put("id", Integer.toString(categoriesId[i]));
+                    m.put(ATTRIBUTE_NAME_CATEGORY, categoriesName[i]);
+                    data.add(m);
                 }
-            });
+
+                String[] from = { ATTRIBUTE_NAME_CATEGORY };
+                int[] to = { R.id.categoryName };
+
+                adapter = new SimpleAdapter(CategoriesActivity.this, data,
+                        R.layout.categories_item, from, to);
+                listView.setAdapter(adapter);
+
+                // Item selected:
+
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        if (friend_id != null && !friend_id.isEmpty()) {
+                            categoryId = Integer.toString(categoriesId[position]);
+                            new IWantToPlayWithFriend().execute();
+                        } else {
+                            Object activity = ThrobberActivity.class;
+                            Intent intent = new Intent(getApplicationContext(),
+                                    (Class<?>) activity);
+                            intent.putExtra("categoryId", categoriesId[position]);
+                            intent.putExtra("token", token);
+                            intent.putExtra("sessionId", sessionId);
+                            startActivity(intent);
+                        }
+                    }
+                });
+            }
         }
     }
     private class IWantToPlayWithFriend extends AsyncTask<String, String, String> {
@@ -366,12 +336,6 @@ public class CategoriesActivity extends ActionBarActivity {
             getApplicationContext().startActivity(intent);
         }
     }
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
@@ -391,7 +355,7 @@ public class CategoriesActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh && isInternet) {
+        if (id == R.id.action_refresh && isNetworkAvailable()) {
 
             new GetCategories().execute();
             return true;
