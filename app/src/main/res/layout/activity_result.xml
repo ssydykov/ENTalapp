@@ -92,29 +92,21 @@
                 android:layout_weight="1"
                 >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:textSize="25sp"
-                    android:text=""
-                    android:layout_gravity="center"
-                    android:id="@+id/textViewStatus"
-                    android:textColor="@color/primary_text"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:textSize="15sp"
-                    android:layout_gravity="center"
-                    android:id="@+id/textViewInternetStatus"
-                    android:textColor="@color/secondary_text"/>
                 <ProgressBar
                     style="?android:attr/progressBarStyleSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:id="@+id/progressBar3" />
+                    android:id="@+id/progressBar" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:textSize="18sp"
+                    android:text=""
+                    android:layout_gravity="center"
+                    android:id="@+id/textViewStatus"
+                    android:textColor="@color/primary_text"/>
                 <LinearLayout
                     android:orientation="horizontal"
                     android:layout_width="fill_parent"
@@ -168,10 +160,20 @@
                 android:layout_width="fill_parent"
                 android:layout_height="45dp"
                 android:layout_marginTop="10dp"
+                android:textSize="12sp"
+                android:text="Новая Игра"
+                android:onClick="onClickAnotherGame"
+                android:background="@drawable/button"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="16dp"
                 android:textSize="12sp"
-                android:text="@string/another_game"
-                android:onClick="onClickAnotherGame"
+                android:text="Поделиться"
+                android:onClick="onClickShare"
                 android:background="@drawable/button"
                 android:textColor="@color/white"/>
 

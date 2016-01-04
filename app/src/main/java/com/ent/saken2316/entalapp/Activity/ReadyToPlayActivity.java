@@ -46,7 +46,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
     Context context;
 
     String token, sessionId;
-    String gameID, opponentName, opponentAvatar, opponentCity, opponentPoint;
+    String gameID, opponentName, opponentAvatar, opponentCity, opponentPoint, categoryName;
     String questions[], answer1[], answer2[], answer3[], answer4[];
     Boolean isNotification;
     int answer[];
@@ -62,6 +62,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
         intent = getIntent();
         isNotification = intent.getBooleanExtra("isNotification", false);
         gameID = intent.getStringExtra("game_id");
+        categoryName = intent.getStringExtra("category_name");
 
         avatar1 = (ImageView) findViewById(R.id.avatar1);
         avatar2 = (ImageView) findViewById(R.id.avatar2);
@@ -231,6 +232,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
         b.putStringArray("answer3", answer3);
         b.putStringArray("answer4", answer4);
         b.putIntArray("answer", answer);
+        b.putString("category_name", categoryName);
         intent.putExtras(b);
         context.startActivity(intent);
     }

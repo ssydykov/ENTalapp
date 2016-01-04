@@ -43,10 +43,11 @@
     <string name="revenge">Реванш</string>
     <string name="update">Обновить</string>
     <string name="another_game">Новая Игра</string>
-    <string name="win">Победа!!!</string>
-    <string name="lose">Поражение =(</string>
+    <string name="win">Победа!</string>
+    <string name="lose">Поражение</string>
     <string name="dead_heat">Ничья</string>
-    <string name="wait">Ожидание второго игрока...</string>
+    <string name="wait">Друг играет...</string>
+    <string name="done">Друг тормозит! Сыграй в новую игру</string>
 
     <string name="wait_friends">Идет загрузка Друзей...</string>
     <string name="wait_profile">Загрузка Профиля...</string>

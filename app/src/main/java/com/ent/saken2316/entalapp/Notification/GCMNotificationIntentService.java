@@ -17,7 +17,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 public class GCMNotificationIntentService extends IntentService {
 
     public static final int notifyID = 9001;
-    public String title, message, gameId;
+    public String title, message, gameId, categoryName;
 
     public GCMNotificationIntentService() {
         super("GcmIntentService");
@@ -39,6 +39,7 @@ public class GCMNotificationIntentService extends IntentService {
                 message = extras.getString("message");
                 title = extras.getString("title");
                 gameId = extras.getString("game_id");
+                categoryName = extras.getString("category_name");
                 sendNotification("" + extras.get("message"));
             }
         }

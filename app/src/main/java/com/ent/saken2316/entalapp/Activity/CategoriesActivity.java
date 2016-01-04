@@ -247,6 +247,7 @@ public class CategoriesActivity extends ActionBarActivity {
                             Intent intent = new Intent(getApplicationContext(),
                                     (Class<?>) activity);
                             intent.putExtra("categoryId", categoriesId[position]);
+                            intent.putExtra("category_name", categoriesName[position]);
                             intent.putExtra("token", token);
                             intent.putExtra("sessionId", sessionId);
                             startActivity(intent);

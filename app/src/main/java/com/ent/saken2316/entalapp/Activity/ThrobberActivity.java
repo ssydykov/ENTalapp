@@ -67,7 +67,7 @@ public class ThrobberActivity extends ActionBarActivity {
     private static final String TAG_ANSWER = "correct_answer";
 
     Boolean success = false, isThrobber = true, isQuery = false, isBot = false;
-    String gameID, opponentName, opponentAvatar, opponentPoint;
+    String gameID, opponentName, opponentAvatar, opponentPoint, categoryName;
     String questions[], answer1[], answer2[], answer3[], answer4[];
     int answer[];
     ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
@@ -85,6 +85,7 @@ public class ThrobberActivity extends ActionBarActivity {
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
         categoryId = intent.getIntExtra("categoryId", 0);
+        categoryName = intent.getStringExtra("category_name");
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
@@ -223,6 +224,7 @@ public class ThrobberActivity extends ActionBarActivity {
                 b.putStringArray("answer3", answer3);
                 b.putStringArray("answer4", answer4);
                 b.putIntArray("answer", answer);
+                b.putString("category_name", categoryName);
                 intent.putExtras(b);
                 context.startActivity(intent);
             }

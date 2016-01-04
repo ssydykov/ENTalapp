@@ -48,8 +48,8 @@ public class GameActivity extends ActionBarActivity {
     String token, sessionId;
     Handler handler = new Handler();
 
-    String gameID, opponentName, opponentAvatar, opponentCity, opponentPoint;
-    String questions[], answer1[], answer2[], answer3[], answer4[];
+    String gameID, opponentName, opponentAvatar, opponentCity, opponentPoint, categoryName;
+    String questions[], answer1[], answer2[], answer3[], answer4[], jsonStr;
     int progressStatus = 100, counter = 0, point = 0, answer[], userAnswer[], userPoint[];
     int DIALOG_FINISH = 1;
     boolean isProgress = true, buttonClicked = false, isInternet, isSetQuestion = true;
@@ -92,6 +92,7 @@ public class GameActivity extends ActionBarActivity {
         answer3 = intent.getStringArrayExtra("answer3");
         answer4 = intent.getStringArrayExtra("answer4");
         answer = intent.getIntArrayExtra("answer");
+        categoryName = intent.getStringExtra("category_name");
 
         userAnswer = new int[5];
         userPoint = new int[5];
@@ -332,8 +333,7 @@ public class GameActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("total", Integer.toString(point)));
 
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST, params, token, sessionId);
-            String jsonStr = arrayListResponse[2];
-            Log.e("Response: ", "> " + jsonStr);
+            jsonStr = arrayListResponse[2];
 
             return null;
         }
@@ -350,7 +350,32 @@ public class GameActivity extends ActionBarActivity {
             intent.putExtra("token", token);
             intent.putExtra("sessionId", sessionId);
             intent.putExtra("gameId", gameID);
+            intent.putExtra("category_name", categoryName);
+            intent.putExtra("my_total", Integer.toString(point));
+            intent.putExtra("opponent_name", opponentName);
+            intent.putExtra("opponent_avatar", opponentAvatar);
+
+            if (jsonStr != null){
+
+                intent.putExtra("query_success", true);
+            }
+            else {
+
+                intent.putExtra("query_success", false);
+                intent.putExtra("answer1", Integer.toString(userAnswer[0]));
+                intent.putExtra("answer2", Integer.toString(userAnswer[1]));
+                intent.putExtra("answer3", Integer.toString(userAnswer[2]));
+                intent.putExtra("answer4", Integer.toString(userAnswer[3]));
+                intent.putExtra("answer5", Integer.toString(userAnswer[4]));
+                intent.putExtra("point1", Integer.toString(userPoint[0]));
+                intent.putExtra("point2", Integer.toString(userPoint[1]));
+                intent.putExtra("point3", Integer.toString(userPoint[2]));
+                intent.putExtra("point4", Integer.toString(userPoint[3]));
+                intent.putExtra("point5", Integer.toString(userPoint[4]));
+            }
+
             startActivity(intent);
+
         }
     }
 
@@ -410,7 +435,6 @@ public class GameActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
 
     @Override
     protected void onPause() {

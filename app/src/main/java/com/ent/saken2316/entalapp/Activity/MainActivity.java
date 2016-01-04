@@ -69,7 +69,7 @@ public class MainActivity extends ActionBarActivity {
     JSONObject messages = null;
     JSONArray message = null;
 
-    String first_name, last_name, avatar, city = "Kazakhstan", id_vk, id_fb, token, sessionId, friends;
+    String first_name, last_name, avatar, city = "Не указан", id_vk, id_fb, token, sessionId, friends;
     boolean success;
 
     @Override

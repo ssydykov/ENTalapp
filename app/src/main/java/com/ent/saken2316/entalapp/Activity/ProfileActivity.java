@@ -348,7 +348,6 @@ public class ProfileActivity extends ActionBarActivity {
         }
     }
 
-
     private List<Person> parseJson(String array){
 
         JsonElement jelement = new JsonParser().parse(array);
@@ -472,6 +471,7 @@ public class ProfileActivity extends ActionBarActivity {
                         intent.putExtra("gameId", resultsList.get(position).getGameId());
                         intent.putExtra("token", token);
                         intent.putExtra("sessionId", sessionId);
+                        intent.putExtra("query_success", true);
                         startActivity(intent);
                     }
                 });
@@ -530,7 +530,6 @@ public class ProfileActivity extends ActionBarActivity {
             }
         }
     }
-
 
     private class WhoChallengeMe extends AsyncTask<String, String, String>{
 
@@ -616,7 +615,7 @@ public class ProfileActivity extends ActionBarActivity {
             Log.e("Answer and Game id", answer + " " + challenge.getGameId());
             String[] arrayListResponse = sh.makeServiceCall(url6, ServiceHandler.POST,
                     params, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null) {
@@ -666,8 +665,27 @@ public class ProfileActivity extends ActionBarActivity {
             if (pDialog.isShowing())
                 pDialog.dismiss();
 
-            if (success){
+            if (success && jsonStr != null){
 
+                Intent intent = new Intent(context, ReadyToPlayActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                Bundle b = new Bundle();
+                b.putString("token", token);
+                b.putString("sessionId", sessionId);
+                b.putString("game_id", gameID);
+                b.putString("opponent_name", opponentName);
+                b.putString("opponent_avatar", opponentAvatar);
+//                b.putString("opponent_city", opponentCity);
+                b.putString("opponent_point", opponentPoint);
+                b.putStringArray("questions", questions);
+                b.putStringArray("answer1", answer1);
+                b.putStringArray("answer2", answer2);
+                b.putStringArray("answer3", answer3);
+                b.putStringArray("answer4", answer4);
+                b.putIntArray("answer", right_answer);
+                b.putString("category_name", challenge.getCategoryName());
+                intent.putExtras(b);
+                context.startActivity(intent);
             }
 
         }
@@ -783,7 +801,7 @@ public class ProfileActivity extends ActionBarActivity {
             }
             return false;
         } else {
-            Toast.makeText( context, "This device supports Play services, App will work normally", Toast.LENGTH_LONG).show();
+            Log.e("Notification", "This device supports Play services, App will work normally");
         }
         return true;
     }
@@ -808,8 +826,11 @@ public class ProfileActivity extends ActionBarActivity {
             if(!TextUtils.isEmpty(regId)) {
                 storeRegIdinSharedPref(context, regId);
                 new RegId().execute();
-                Toast.makeText(context, "Registered with GCM Server successfully.\n\n" + msg, Toast.LENGTH_SHORT).show();
-            } else Toast.makeText(context, "Reg ID Creation Failed.\n\nEither you haven't enabled Internet or GCM server is busy right now. Make sure you enabled Internet and try registering again after some time." + msg, Toast.LENGTH_LONG).show();
+                Log.e("Notification", "Registered with GCM Server successfully.\n\n" + msg);
+            } else Log.e("Notification", "Reg ID Creation Failed.\n\n" +
+                    "Either you haven't enabled Internet or GCM server is " +
+                    "busy right now. Make sure you enabled Internet and try registering " +
+                    "again after some time." + msg);
         }
 
     }

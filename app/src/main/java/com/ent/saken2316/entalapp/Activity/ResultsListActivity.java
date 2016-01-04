@@ -270,6 +270,7 @@ public class ResultsListActivity extends ActionBarActivity {
                         intent.putExtra("gameId", resultsList.get(position).getGameId());
                         intent.putExtra("token", token);
                         intent.putExtra("sessionId", sessionId);
+                        intent.putExtra("query_success", true);
                         startActivity(intent);
                     }
                 });

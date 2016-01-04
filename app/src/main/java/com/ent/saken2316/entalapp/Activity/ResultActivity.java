@@ -4,11 +4,18 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -33,6 +40,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -46,6 +56,7 @@ public class ResultActivity extends ActionBarActivity {
     private static String url = "http://env-3315080.j.dnr.kz/mainapp/gameresult/";
     private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/iwanttoplaywithfriend/";
     private static String url3 = "http://env-3315080.j.dnr.kz/mainapp/playwithbot/";
+    private static String url4 = "http://env-3315080.j.dnr.kz/mainapp/gameend/";
 
     JSONObject myResult = null;
     JSONObject message = null;
@@ -54,16 +65,19 @@ public class ResultActivity extends ActionBarActivity {
     Intent intent;
     Toolbar toolbar;
     ImageView imageView1, imageView2;
-    TextView textViewName1, textViewName2, textViewInternetStatus,
-            textViewStatus, textViewPoint1, textViewPoint2;
+    Bitmap bitmap;
+    TextView textViewName1, textViewName2, textViewStatus,
+            textViewPoint1, textViewPoint2;
     ProgressBar progressBar;
     ProgressDialog pDialog;
-    String userName, opponentName, opponentTotal, opponentPoint, myTotal,
+    String userName, opponentName, opponentTotal, opponentPoint, myTotal, jsonStr,
             categoryName, date, gameId, category_id, friend_id, avatar1, avatar2;
-    String questions[], answer1[], answer2[], answer3[], answer4[];
-    int right_answer[];
-    String token, sessionId;
-    Boolean success = false, isInternet;
+    String questions[], answer1[], answer2[], answer3[], answer4[],
+            q_answer1, q_answer2, q_answer3, q_answer4, q_answer5,
+            point1, point2, point3, point4, point5;
+    int right_answer[], queryCount = 0;
+    String token, sessionId, extStorageDirectory;
+    Boolean success = false, query_success;
     Context context;
     ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
 
@@ -72,19 +86,27 @@ public class ResultActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
         context = getApplicationContext();
-        isInternet = isNetworkAvailable();
 
         // Intent values:
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
         gameId = intent.getStringExtra("gameId");
+        categoryName = intent.getStringExtra("category_name");
+        myTotal = intent.getStringExtra("my_total");
+        opponentName = intent.getStringExtra("opponent_name");
+        avatar2 = intent.getStringExtra("opponent_avatar");
+        query_success = intent.getBooleanExtra("query_success", true);
+
+        // Shared preferences values:
+        SharedPreferences sharedPreferencesProfile = getSharedPreferences("user", 0);
+        userName = sharedPreferencesProfile.getString("first_name", "");
+        avatar1 = sharedPreferencesProfile.getString("avatar", "");
 
         // View values:
-        progressBar = (ProgressBar) findViewById(R.id.progressBar3);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
         textViewStatus = (TextView) findViewById(R.id.textViewStatus);
-        textViewInternetStatus = (TextView) findViewById(R.id.textViewInternetStatus);
         textViewName1 = (TextView) findViewById(R.id.textViewName1);
         textViewName2 = (TextView) findViewById(R.id.textViewName2);
         textViewPoint1 = (TextView) findViewById(R.id.textViewPoint1);
@@ -92,23 +114,33 @@ public class ResultActivity extends ActionBarActivity {
         imageView1 = (ImageView) findViewById(R.id.avatar1);
         imageView2 = (ImageView) findViewById(R.id.avatar2);
 
-        // Shared preferences values:
-        SharedPreferences sharedPreferencesProfile = getSharedPreferences("user", 0);
-        userName = sharedPreferencesProfile.getString("first_name", "");
-        avatar1 = sharedPreferencesProfile.getString("avatar", "");
-
         // Create toolbar:
         toolbarBuilder();
 
         // Create status bar:
         statusBarBuilder();
 
-        if (isInternet){
+        if (isNetworkAvailable() && query_success){
+
             new GetMyResult().execute();
         }
+        else if (isNetworkAvailable()){
+
+            q_answer1 = intent.getStringExtra("answer1");
+            q_answer2 = intent.getStringExtra("answer2");
+            q_answer3 = intent.getStringExtra("answer3");
+            q_answer4 = intent.getStringExtra("answer4");
+            q_answer5 = intent.getStringExtra("answer5");
+            point1 = intent.getStringExtra("point1");
+            point2 = intent.getStringExtra("point2");
+            point3 = intent.getStringExtra("point3");
+            point4 = intent.getStringExtra("point4");
+            point5 = intent.getStringExtra("point5");
+        }
         else {
+
             progressBar.setVisibility(View.INVISIBLE    );
-            textViewInternetStatus.setText(getResources().getString(R.string.connection_error));
+            textViewStatus.setText(getResources().getString(R.string.connection_error));
         }
     }
 
@@ -156,6 +188,62 @@ public class ResultActivity extends ActionBarActivity {
         }
     }
 
+    private class GameEnd extends AsyncTask<String, String, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            progressBar.setVisibility(View.VISIBLE);
+            textViewStatus.setText("Передача ваших данных");
+        }
+
+        @Override
+        protected String doInBackground(String... args) {
+
+            ServiceHandler sh = new ServiceHandler();
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("game_id", gameId));
+            params.add(new BasicNameValuePair("answer1", q_answer1));
+            params.add(new BasicNameValuePair("answer2", q_answer2));
+            params.add(new BasicNameValuePair("answer3", q_answer3));
+            params.add(new BasicNameValuePair("answer4", q_answer4));
+            params.add(new BasicNameValuePair("answer5", q_answer5));
+            params.add(new BasicNameValuePair("point1", point1));
+            params.add(new BasicNameValuePair("point2", point2));
+            params.add(new BasicNameValuePair("point3", point3));
+            params.add(new BasicNameValuePair("point4", point4));
+            params.add(new BasicNameValuePair("point5", point5));
+            params.add(new BasicNameValuePair("total", myTotal));
+
+            String[] arrayListResponse = sh.makeServiceCall(url4, ServiceHandler.POST, params, token, sessionId);
+            jsonStr = arrayListResponse[2];
+
+            return null;
+        }
+
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            progressBar.setVisibility(View.INVISIBLE);
+
+            Runnable task = new Runnable() {
+                public void run() {
+
+                    if (jsonStr == null && queryCount < 5){
+
+                        queryCount++;
+                        new GameEnd().execute();
+                    }
+                    else {
+
+                        new GetMyResult().execute();
+                    }
+                }
+            };
+            worker.schedule(task, 5, TimeUnit.SECONDS);
+        }
+    }
     private class GetMyResult extends AsyncTask<String, String, String> {
 
         @Override
@@ -166,7 +254,7 @@ public class ResultActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("game_id", gameId));
             String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
                     params, token, sessionId);
-            String jsonStr = arrayListResponse[2];
+            jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null) {
@@ -219,54 +307,104 @@ public class ResultActivity extends ActionBarActivity {
                     .bitmapTransform(new CropCircleTransformation(context))
                     .into(imageView2);
 
-            if (success)
-            {
+            if (jsonStr == null) {
+
+                progressBar.setVisibility(View.INVISIBLE);
+                textViewStatus.setText(getResources().getString(R.string.connection_error));
+            }
+            else if (success && queryCount < 5){
+
                 progressBar.setVisibility(View.INVISIBLE);
                 if (Integer.parseInt(myTotal) > Integer.parseInt(opponentTotal)){
                     textViewStatus.setText(getResources().getString(R.string.win));
+                    textViewStatus.setTextColor(getResources().getColor(R.color.primary_green));
                 }
                 else if (Integer.parseInt(myTotal) < Integer.parseInt(opponentTotal)){
                     textViewStatus.setText(getResources().getString(R.string.lose));
+                    textViewStatus.setTextColor(getResources().getColor(R.color.primary_red));
                 }
                 else {
                     textViewStatus.setText(getResources().getString(R.string.dead_heat));
+                    textViewStatus.setTextColor(getResources().getColor(R.color.accent));
                 }
             }
-            else
-            {
-                textViewStatus.setTextSize(15);
+            else {
+
                 textViewStatus.setText(getResources().getString(R.string.wait));
                 Runnable task = new Runnable() {
                     public void run() {
-                        isInternet = isNetworkAvailable();
-                        if (isInternet){
+
+                        if (isNetworkAvailable() && queryCount < 5){
+
+                            queryCount++;
                             new GetMyResult().execute();
-                        }
-                        else {
-                            textViewInternetStatus.setText(getResources().getString(R.string.connection_error));
-                            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
-                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 };
                 worker.schedule(task, 5, TimeUnit.SECONDS);
+
+                if (isNetworkAvailable() && queryCount == 5){
+
+                    textViewStatus.setText(getResources().getString(R.string.done));
+                    progressBar.setVisibility(View.INVISIBLE);
+                }
+                else if (!isNetworkAvailable()){
+
+                    worker.shutdownNow();
+                    progressBar.setVisibility(View.INVISIBLE);
+                    textViewStatus.setText(getResources().getString(R.string.connection_error));
+                }
             }
+
         }
     }
 
-    public void onClickAnotherGame(View view){
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-        Object activity = ChooseOpponentActivity.class;
-        Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-        intent.putExtra("token", token);
-        intent.putExtra("sessionId", sessionId);
-        startActivity(intent);
+            worker.shutdownNow();
+            worker.shutdown();
+            Object activity = ProfileActivity.class;
+            Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+            intent.putExtra("token", token);
+            intent.putExtra("sessionId", sessionId);
+            startActivity(intent);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_result, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if (id == R.id.action_refresh && isNetworkAvailable()) {
+
+            progressBar.setVisibility(View.VISIBLE);
+            new GetMyResult().execute();
+            return true;
+        } else {
+            textViewStatus.setText(getResources().getString(R.string.connection_error));
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     public void onClickRevenge(View view){
+
         new IWantToPlayWithFriend().execute();
     }
-
     private class IWantToPlayWithFriend extends AsyncTask<String, String, String> {
 
         @Override
@@ -344,9 +482,6 @@ public class ResultActivity extends ActionBarActivity {
             super.onPostExecute(result);
             pDialog.dismiss();
 
-            Toast.makeText(getBaseContext(), getResources().getString(R.string.want_to_play),
-                    Toast.LENGTH_SHORT).show();
-
             Intent intent = new Intent(getApplicationContext(), ReadyToPlayActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             Bundle b = new Bundle();
@@ -367,48 +502,76 @@ public class ResultActivity extends ActionBarActivity {
         }
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+    public void onClickAnotherGame(View view){
 
-            worker.shutdownNow();
-            worker.shutdown();
-            Object activity = ProfileActivity.class;
-            Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-            intent.putExtra("token", token);
-            intent.putExtra("sessionId", sessionId);
-            startActivity(intent);
-            return true;
+        Object activity = ChooseOpponentActivity.class;
+        Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+        intent.putExtra("token", token);
+        intent.putExtra("sessionId", sessionId);
+        startActivity(intent);
+    }
+
+    public void onClickShare(View view){
+
+        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.win);
+        extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+
+        saveImageToGallery();
+    }
+    private void saveImageToGallery(){
+
+        try{
+
+            File file = new File(extStorageDirectory, "win.png");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
         }
-        return super.onKeyDown(keyCode, event);
-    }
+        catch (Exception e){
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_result, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        isInternet = isNetworkAvailable();
-        if (id == R.id.action_refresh && isInternet) {
-
-            progressBar.setVisibility(View.VISIBLE);
-            new GetMyResult().execute();
-            return true;
-        } else {
-            textViewStatus.setText(getResources().getString(R.string.connection_error));
-            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
-                    Toast.LENGTH_SHORT).show();
+            Log.e("File Output Exception", e.toString());
         }
 
-        return super.onOptionsItemSelected(item);
+        String type = "image/*";
+        String filename = "/win.png";
+        String mediaPath = extStorageDirectory + filename;
+
+        createInstagramIntent(type, mediaPath);
     }
+    private void createInstagramIntent(String type, String mediaPath){
+
+        // Create the new Intent using the 'Send' action.
+        Intent share = new Intent(Intent.ACTION_SEND);
+
+//        Intent shareIntent = new Intent(
+//                android.content.Intent.ACTION_SEND);
+//        shareIntent.setType("image/*");
+//        shareIntent.putExtra(Intent.EXTRA_STREAM,
+//                getImageUri(HomeActivity.this, result));
+//        shareIntent.putExtra(Intent.EXTRA_SUBJECT, sharename);
+//        shareIntent.putExtra(
+//                Intent.EXTRA_TEXT,
+//                "Check this out, what do you think?"
+//                        + System.getProperty("line.separator")
+//                        + sharedescription);
+//        shareIntent.setPackage("com.instagram.android");
+//        startActivity(shareIntent);
+
+        // Set the MIME type
+        share.setType(type);
+
+        // Create the URI from the media
+        File media = new File(mediaPath);
+        Uri uri = Uri.fromFile(media);
+
+        // Add the URI to the Intent.
+        share.putExtra(Intent.EXTRA_STREAM, uri);
+        share.putExtra(Intent.EXTRA_TEXT, "Hello, Entallap");
+//        share.setPackage("com.instagram.android");
+
+        // Broadcast the Intent.
+        startActivity(Intent.createChooser(share, "Share to"));
+    }
+
 }
