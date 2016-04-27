@@ -10,6 +10,9 @@ public class Person {
     @SerializedName("game_id")
     private String gameId;
 
+    @SerializedName("language")
+    private String language;
+
     @SerializedName("last_name")
     private String lastName;
 
@@ -30,6 +33,9 @@ public class Person {
 
     @SerializedName("category_name")
     private String categoryName;
+
+    @SerializedName("category")
+    private String category;
 
     @SerializedName("date")
     private String date;
@@ -63,6 +69,22 @@ public class Person {
 
     @SerializedName("user_id")
     private String userId;
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
 
     public String getUserId() {
         return userId;

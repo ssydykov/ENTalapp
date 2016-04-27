@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context="com.ent.saken2316.entalapp.Activity.ProfileActivity">
+    tools:context="com.ent.saken2316.entalapp.Activity.MyProfileActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
@@ -18,9 +18,7 @@
     <FrameLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginTop="?attr/actionBarSize">
 
         <ProgressBar
             style="?android:progressBarStyleSmall"

@@ -1,13 +1,12 @@
 package com.ent.saken2316.entalapp.Activity;
 
-import android.content.Context;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -20,14 +19,26 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.SimpleAdapter;
+import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Adapter.CategoriesAdapter;
+import com.ent.saken2316.entalapp.Adapter.CategoriesRusAdapter;
+import com.ent.saken2316.entalapp.Model.MyApplication;
+import com.ent.saken2316.entalapp.Model.Person;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -35,28 +46,29 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CategoriesActivity extends ActionBarActivity {
 
-    SimpleAdapter adapter;
-    ListView listView;
+    TabHost tabHost;
+    ListView listView1, listView2;
     Intent intent;
     Toolbar toolbar;
-    String token, sessionId;
+    String token, sessionId, language;
     ProgressBar progressBar;
+    ProgressDialog pDialog;
     Button updateButton;
     TextView textView;
+    List<Person> categoriesList;
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/categories/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/iwanttoplaywithfriend/";
+    private String urlGlobal;
+    private static String url = "mainapp/categories/";
+    private static String url2 = "mainapp/iwanttoplaywithfriend/";
+    private static String url3 = "mainapp/playwithbot/";
 
     private static final String TAG_MESSAGE = "message";
-    private static final String TAG_ID = "id";
-    private static final String TAG_CATEGORY = "category";
     private static final String TAG_OPPONENT_NAME = "opponent_name";
     private static final String TAG_OPPONENT_AVATAR = "opponent_avatar";
     private static final String TAG_OPPONENT_POINT = "opponent_points";
@@ -70,25 +82,72 @@ public class CategoriesActivity extends ActionBarActivity {
     private static final String TAG_GAME_ID = "game_id";
     JSONObject message = null;
     JSONArray questionsJSON = null;
-    JSONArray categories = null;
 
-    final String ATTRIBUTE_NAME_CATEGORY = "category";
-    String categoriesName[], friend_id = "", categoryId, jsonStr;
+    String friend_id = "", categoryId, jsonStr;
     String opponentName, opponentPoint, gameId, opponentAvatar;
     String questions[], answer1[], answer2[], answer3[], answer4[];
-    int right_answer[], categoriesId[];
+    int right_answer[];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_categories);
+        setContentView(R.layout.test_categories);
 
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
         friend_id = intent.getStringExtra("friend_id");
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
 
+        getPref();
         toolbarBuilder();
+
+        tabHost = (TabHost) findViewById(android.R.id.tabhost);
+        tabsBuilder();
+        listView1 = (ListView) findViewById(R.id.listView1);
+        listView2 = (ListView) findViewById(R.id.listView2);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        textView = (TextView) findViewById(R.id.textView);
+        updateButton = (Button) findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new GetCategories().execute();
+                updateButton.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        // Get Categories
+        categoriesList = ((MyApplication)this.getApplication()).getCategoriesList();
+        if (categoriesList == null){
+
+            progressBar.setVisibility(View.VISIBLE);
+            textView.setText(getResources().getString(R.string.wait_subjects));
+            textView.setVisibility(View.VISIBLE);
+            tabHost.setVisibility(View.INVISIBLE);
+        }
+        else{
+
+            setCategoriesList();
+        }
+        new GetCategories().execute();
+    }
+
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
+    }
+
+
+    private void toolbarBuilder(){
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -104,30 +163,6 @@ public class CategoriesActivity extends ActionBarActivity {
                 startActivity(intent);
             }
         });
-
-        listView = (ListView) findViewById(R.id.listView);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        textView = (TextView) findViewById(R.id.textView);
-        updateButton = (Button) findViewById(R.id.updateButton);
-        updateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                new GetCategories().execute();
-                updateButton.setVisibility(View.INVISIBLE);
-            }
-        });
-
-        new GetCategories().execute();
-    }
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-    private void toolbarBuilder(){
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -146,119 +181,163 @@ public class CategoriesActivity extends ActionBarActivity {
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         }
     }
+    private void tabsBuilder(){
 
-    private class GetCategories extends AsyncTask<String, String, String> {
+        tabHost.setup();
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            setRefreshActionButtonState(true);
-            progressBar.setVisibility(View.VISIBLE);
-            textView.setText(getResources().getString(R.string.getting_categories));
-            textView.setVisibility(View.VISIBLE);
-            listView.setVisibility(View.INVISIBLE);
+        final TabWidget tabWidget = tabHost.getTabWidget();
+        final FrameLayout tabContent = tabHost.getTabContentView();
+
+        // Get the original tab textviews and remove them from the viewgroup.
+        TextView[] originalTextViews = new TextView[tabWidget.getTabCount()];
+        for (int index = 0; index < tabWidget.getTabCount(); index++) {
+            originalTextViews[index] = (TextView) tabWidget.getChildTabViewAt(index);
         }
+        tabWidget.removeAllViews();
+
+        // Ensure that all tab content childs are not visible at startup.
+        for (int index = 0; index < tabContent.getChildCount(); index++) {
+            tabContent.getChildAt(index).setVisibility(View.GONE);
+        }
+
+        // Create the tabspec based on the textview childs in the xml file.
+        // Or create simple tabspec instances in any other way...
+        for (int index = 0; index < originalTextViews.length; index++) {
+            final TextView tabWidgetTextView = originalTextViews[index];
+            final View tabContentView = tabContent.getChildAt(index);
+            TabHost.TabSpec tabSpec = tabHost.newTabSpec((String) tabWidgetTextView.getTag());
+            tabSpec.setContent(new TabHost.TabContentFactory() {
+                @Override
+                public View createTabContent(String tag) {
+                    return tabContentView;
+                }
+            });
+            if (tabWidgetTextView.getBackground() == null) {
+                tabSpec.setIndicator(tabWidgetTextView.getText());
+            } else {
+                tabSpec.setIndicator(tabWidgetTextView.getText(), tabWidgetTextView.getBackground());
+            }
+            tabHost.addTab(tabSpec);
+        }
+        changeTabs(tabWidget);
+    }
+    private void changeTabs(TabWidget tabWidget) {
+        // Change background
+        for(int i=0; i < tabWidget.getChildCount(); i++)
+            tabWidget.getChildAt(i).setBackgroundResource(R.drawable.tab_indicator);
+    }
+
+    private List<Person> parseJson(String array){
+
+        JsonElement jelement = new JsonParser().parse(array);
+        JsonObject jo = jelement.getAsJsonObject();
+        jo = jo.getAsJsonObject();
+        JsonArray ja = jo.getAsJsonArray("message");
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<Person>>(){}.getType();
+        List<Person> resultsModels = (List<Person>) gson.fromJson(ja, listType);
+//        Log.e("My_result", resultsModels.toString());
+
+        return resultsModels;
+    }
+    private class GetCategories extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
-                    null, token, sessionId);
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("language", language));
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST,
+                    params, token, sessionId);
             jsonStr = arrayListResponse[2];
-            Log.e("Response: ", "> " + jsonStr);
+//            Log.e("Response: ", "> " + jsonStr);
 
-
-            if (jsonStr != null) {
-                try {
-                    JSONObject jsonObj = new JSONObject(jsonStr);
-
-                    // Getting JSON Array node
-                    categories = jsonObj.getJSONArray(TAG_MESSAGE);
-                    categoriesName = new String[categories.length()];
-                    categoriesId = new int[categories.length()];
-
-                    // looping through All Contacts
-                    for (int i = 0; i < categories.length(); i++) {
-                        JSONObject c = categories.getJSONObject(i);
-
-                        categoriesId[i] = c.getInt(TAG_ID);
-                        categoriesName[i] = c.getString(TAG_CATEGORY);
-                    }
-                    SharedPreferences sharedPreferences = getSharedPreferences("categories", 0);
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("data", jsonStr);
-                    editor.commit();
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                Log.e("ServiceHandler", "Couldn't get any data from the url");
-            }
+            if (jsonStr != null)
+                categoriesList = parseJson(jsonStr);
 
             return null;
         }
 
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            setRefreshActionButtonState(false);
             progressBar.setVisibility(View.INVISIBLE);
+            tabHost.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
 
             if (jsonStr == null){
 
+                tabHost.setVisibility(View.INVISIBLE);
                 updateButton.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("Bad internet connection");
+                textView.setText(getResources().getString(R.string.connection_error));
             }
-            else if (categories != null){
+            else if (!categoriesList.isEmpty()){
 
-                listView.setVisibility(View.VISIBLE);
-                textView.setVisibility(View.INVISIBLE);
-
-                ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
-                        categoriesName.length);
-                Map<String, Object> m;
-
-                for (int i = 0; i < categoriesName.length; i++) {
-                    m = new HashMap<String, Object>();
-                    m.put("id", Integer.toString(categoriesId[i]));
-                    m.put(ATTRIBUTE_NAME_CATEGORY, categoriesName[i]);
-                    data.add(m);
-                }
-
-                String[] from = { ATTRIBUTE_NAME_CATEGORY };
-                int[] to = { R.id.categoryName };
-
-                adapter = new SimpleAdapter(CategoriesActivity.this, data,
-                        R.layout.categories_item, from, to);
-                listView.setAdapter(adapter);
-
-                // Item selected:
-
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        if (friend_id != null && !friend_id.isEmpty()) {
-                            categoryId = Integer.toString(categoriesId[position]);
-                            new IWantToPlayWithFriend().execute();
-                        } else {
-                            Object activity = ThrobberActivity.class;
-                            Intent intent = new Intent(getApplicationContext(),
-                                    (Class<?>) activity);
-                            intent.putExtra("categoryId", categoriesId[position]);
-                            intent.putExtra("category_name", categoriesName[position]);
-                            intent.putExtra("token", token);
-                            intent.putExtra("sessionId", sessionId);
-                            startActivity(intent);
-                        }
-                    }
-                });
+                setCategoriesList();
             }
         }
     }
+    private void setCategoriesList(){
+
+        ((MyApplication) CategoriesActivity.this.getApplication()).setCategoriesList(categoriesList);
+
+        listView1.setAdapter(new CategoriesAdapter(CategoriesActivity.this, categoriesList));
+
+        listView1.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                if (friend_id != null && !friend_id.isEmpty()) {
+                    categoryId = categoriesList.get(position).getId();
+                    new IWantToPlayWithFriend().execute();
+                } else {
+                    Object activity = ThrobberActivity.class;
+                    Intent intent = new Intent(getApplicationContext(),
+                            (Class<?>) activity);
+                    intent.putExtra("categoryId", categoriesList.get(position).getId());
+                    intent.putExtra("category_name", categoriesList.get(position).getCategory());
+                    intent.putExtra("token", token);
+                    intent.putExtra("sessionId", sessionId);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        listView2.setAdapter(new CategoriesRusAdapter(CategoriesActivity.this, categoriesList));
+
+        listView2.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                if (friend_id != null && !friend_id.isEmpty()) {
+                    categoryId = categoriesList.get(position).getId();
+                    new IWantToPlayWithFriend().execute();
+                } else {
+                    Object activity = ThrobberActivity.class;
+                    Intent intent = new Intent(getApplicationContext(),
+                            (Class<?>) activity);
+                    intent.putExtra("categoryId", categoriesList.get(position).getId());
+                    intent.putExtra("category_name", categoriesList.get(position).getCategory());
+                    intent.putExtra("token", token);
+                    intent.putExtra("sessionId", sessionId);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+
     private class IWantToPlayWithFriend extends AsyncTask<String, String, String> {
 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(CategoriesActivity.this);
+            pDialog.setMessage(getResources().getString(R.string.wait_notification));
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
         @Override
         protected String doInBackground(String... args) {
 
@@ -266,10 +345,19 @@ public class CategoriesActivity extends ActionBarActivity {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("category_id", categoryId));
             params.add(new BasicNameValuePair("friend_id", friend_id));
-            String[] arrayListResponse = sh.makeServiceCall(url2, ServiceHandler.POST,
-                    params, token, sessionId);
+            params.add(new BasicNameValuePair("language", language));
+            String[] arrayListResponse;
+            if (friend_id.equals("1") || friend_id.equals("2") || friend_id.equals("3") || friend_id.equals("4") ||
+                    friend_id.equals("5") || friend_id.equals("6")){
+                arrayListResponse = sh.makeServiceCall(urlGlobal + url3, ServiceHandler.POST,
+                        params, token, sessionId);
+            }
+            else {
+                arrayListResponse = sh.makeServiceCall(urlGlobal + url2, ServiceHandler.POST,
+                        params, token, sessionId);
+            }
             String jsonStr = arrayListResponse[2];
-            Log.e("Response", arrayListResponse[2]);
+//            Log.e("Response", jsonStr);
 
             if (jsonStr != null) {
                 try {
@@ -318,25 +406,25 @@ public class CategoriesActivity extends ActionBarActivity {
             Toast.makeText(getBaseContext(), getResources().getString(R.string.want_to_play),
                     Toast.LENGTH_SHORT).show();
 
-            Intent intent = new Intent(getApplicationContext(), ReadyToPlayActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Bundle b = new Bundle();
-            b.putString("token", token);
-            b.putString("sessionId", sessionId);
-            b.putString("game_id", gameId);
-            b.putString("opponent_name", opponentName);
-            b.putString("opponent_avatar", opponentAvatar);
-            b.putString("opponent_point", opponentPoint);
-            b.putStringArray("questions", questions);
-            b.putStringArray("answer1", answer1);
-            b.putStringArray("answer2", answer2);
-            b.putStringArray("answer3", answer3);
-            b.putStringArray("answer4", answer4);
-            b.putIntArray("answer", right_answer);
-            intent.putExtras(b);
-            getApplicationContext().startActivity(intent);
+            Object activity = ReadyToPlayActivity.class;
+            Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra("token", token);
+            intent.putExtra("sessionId", sessionId);
+            intent.putExtra("game_id", gameId);
+            intent.putExtra("opponent_name", opponentName);
+            intent.putExtra("opponent_avatar", opponentAvatar);
+            intent.putExtra("opponent_point", opponentPoint);
+            intent.putExtra("questions", questions);
+            intent.putExtra("answer1", answer1);
+            intent.putExtra("answer2", answer2);
+            intent.putExtra("answer3", answer3);
+            intent.putExtra("answer4", answer4);
+            intent.putExtra("answer", right_answer);
+            startActivity(intent);
         }
     }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
@@ -356,28 +444,11 @@ public class CategoriesActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh && isNetworkAvailable()) {
+        if (id == R.id.action_refresh) {
 
             new GetCategories().execute();
             return true;
-        } else {
-            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
-                    Toast.LENGTH_SHORT).show();
         }
-
         return super.onOptionsItemSelected(item);
-    }
-    public void setRefreshActionButtonState(final boolean refreshing) {
-        if (optionsMenu != null) {
-            final MenuItem refreshItem = optionsMenu
-                    .findItem(R.id.action_refresh);
-            if (refreshItem != null) {
-                if (refreshing) {
-                    refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
-                } else {
-                    refreshItem.setActionView(null);
-                }
-            }
-        }
     }
 }

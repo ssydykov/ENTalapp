@@ -5,28 +5,33 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.LightingColorFilter;
-import android.graphics.drawable.Drawable;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
+import android.text.Html;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
@@ -36,31 +41,43 @@ import org.apache.http.message.BasicNameValuePair;
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
+
 public class GameActivity extends ActionBarActivity {
 
     Intent intent;
     ProgressBar progressBar;
     ProgressDialog pDialog;
     Integer r = 0, g = 0, b = 256;
-    TextView textView, textViewPoint, textViewTime;
+    TextView textView, textViewPoint, textViewTime, textViewNumber;
+    LinearLayout linearLayout;
     Button btnAnswer1, btnAnswer2, btnAnswer3, btnAnswer4;
-    Drawable drawable;
+    ImageView imageView1, imageView2, imageViewTip;
+//    Drawable drawable;
     String token, sessionId;
     Handler handler = new Handler();
+    final int MENU_ALPHA_ID = 1, MENU_SCALE_ID = 2;
+    Animation animation = null;
+    Vibrator vibrator;
+    Context context;
 
-    String gameID, opponentName, opponentAvatar, opponentCity, opponentPoint, categoryName;
+    String gameID, opponentName, opponentCity, opponentPoint, categoryName, avatar1, avatar2;
     String questions[], answer1[], answer2[], answer3[], answer4[], jsonStr;
     int progressStatus = 100, counter = 0, point = 0, answer[], userAnswer[], userPoint[];
     int DIALOG_FINISH = 1;
     boolean isProgress = true, buttonClicked = false, isInternet, isSetQuestion = true;
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/gameend/";
+    private String urlGlobal;
+    private static String url = "mainapp/gameend/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
+        setContentView(R.layout.test_game);
         isInternet = isNetworkAvailable();
+        context = getApplicationContext();
+        vibrator = (Vibrator) this.context.getSystemService(Context.VIBRATOR_SERVICE);
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -78,13 +95,14 @@ public class GameActivity extends ActionBarActivity {
             // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         }
+
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
         gameID = intent.getStringExtra("game_id");
         opponentName = intent.getStringExtra("opponent_name");
 //        opponentCity = intent.getStringExtra("opponent_city");
-        opponentAvatar = intent.getStringExtra("opponent_avatar");
+        avatar2 = intent.getStringExtra("opponent_avatar");
         opponentPoint = intent.getStringExtra("opponent_point");
         questions = intent.getStringArrayExtra("questions");
         answer1 = intent.getStringArrayExtra("answer1");
@@ -94,24 +112,51 @@ public class GameActivity extends ActionBarActivity {
         answer = intent.getIntArrayExtra("answer");
         categoryName = intent.getStringExtra("category_name");
 
+        // Shared preferences values:
+        SharedPreferences sharedPreferencesProfile = getSharedPreferences("user", 0);
+        avatar1 = sharedPreferencesProfile.getString("avatar", "");
+        getPref();
+
         userAnswer = new int[5];
         userPoint = new int[5];
 
-        textView = (TextView) findViewById(R.id.textView2);
+        linearLayout = (LinearLayout) findViewById(R.id.linear_layout);
+        textView = (TextView) findViewById(R.id.textView);
         textViewPoint = (TextView) findViewById(R.id.textViewPoint);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
+        textViewNumber = (TextView) findViewById(R.id.textViewNumber);
         btnAnswer1 = (Button) findViewById(R.id.answer1);
         btnAnswer2 = (Button) findViewById(R.id.answer2);
         btnAnswer3 = (Button) findViewById(R.id.answer3);
         btnAnswer4 = (Button) findViewById(R.id.answer4);
+        imageView1 = (ImageView) findViewById(R.id.avatar1);
+        imageView2 = (ImageView) findViewById(R.id.avatar2);
+        imageViewTip = (ImageView) findViewById(R.id.imageTip);
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar2);
         progressBar.setMax(100);
-        drawable = progressBar.getProgressDrawable();
+//        drawable = progressBar.getProgressDrawable();
 
-        textView.setOnClickListener(new View.OnClickListener() {
+        Glide.with(context)
+                .load(avatar1)
+                .bitmapTransform(new CropCircleTransformation(context))
+                .into(imageView1);
+        Glide.with(context)
+                .load(avatar2)
+                .bitmapTransform(new CropCircleTransformation(context))
+                .into(imageView2);
+
+        linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
+
+                SharedPreferences mPrefs = getSharedPreferences("user", 0);
+                SharedPreferences.Editor editor = mPrefs.edit();
+                if (mPrefs.getBoolean("new", true)){
+                    imageViewTip.setVisibility(View.VISIBLE);
+                }
+                editor.putBoolean("new", false);
+                imageViewTip.setVisibility(View.GONE);
                 if (counter != 4 && buttonClicked && !isSetQuestion) {
                     counter++;
                     r = 0;
@@ -120,15 +165,26 @@ public class GameActivity extends ActionBarActivity {
                     isProgress = true;
                     buttonClicked = false;
                     setQuestion();
-                } else if (isInternet && buttonClicked && !isSetQuestion){
+                    linearLayout.setVisibility(View.GONE);
+                } else if (isInternet && buttonClicked && !isSetQuestion) {
                     new GameEnd().execute();
-                } else {
-
                 }
             }
         });
 
         setQuestion();
+    }
+
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
     }
 
     private boolean isNetworkAvailable() {
@@ -137,7 +193,7 @@ public class GameActivity extends ActionBarActivity {
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
-    public void setRightAnswer(){
+    public void setRightAnswer() {
 
         handler.postDelayed(new Runnable() {
             @Override
@@ -145,42 +201,70 @@ public class GameActivity extends ActionBarActivity {
 
                 switch (answer[counter]) {
                     case 1:
-                        btnAnswer1.setBackgroundColor(getResources().getColor(R.color.primary_green));
+                        btnAnswer1.setBackground(getResources().getDrawable(R.drawable.button_game_green));
                         break;
                     case 2:
-                        btnAnswer2.setBackgroundColor(getResources().getColor(R.color.primary_green));
+                        btnAnswer2.setBackground(getResources().getDrawable(R.drawable.button_game_green));
                         break;
                     case 3:
-                        btnAnswer3.setBackgroundColor(getResources().getColor(R.color.primary_green));
+                        btnAnswer3.setBackground(getResources().getDrawable(R.drawable.button_game_green));
                         break;
                     case 4:
-                        btnAnswer4.setBackgroundColor(getResources().getColor(R.color.primary_green));
+                        btnAnswer4.setBackground(getResources().getDrawable(R.drawable.button_game_green));
                         break;
                 }
-                textViewPoint.setText(Integer.toString(point) + " " + getResources().getString(R.string.point));
+                textViewPoint.setText(Integer.toString(point));
+                linearLayout.setVisibility(View.VISIBLE);
             }
         }, 10);
     }
     public void setQuestion(){
 
-        drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
+//        drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
 
-        btnAnswer1.setBackgroundColor(getResources().getColor(R.color.accent));
-        btnAnswer2.setBackgroundColor(getResources().getColor(R.color.accent));
-        btnAnswer3.setBackgroundColor(getResources().getColor(R.color.accent));
-        btnAnswer4.setBackgroundColor(getResources().getColor(R.color.accent));
+        btnAnswer1.setBackground(getResources().getDrawable(R.drawable.button_game));
+        btnAnswer2.setBackground(getResources().getDrawable(R.drawable.button_game));
+        btnAnswer3.setBackground(getResources().getDrawable(R.drawable.button_game));
+        btnAnswer4.setBackground(getResources().getDrawable(R.drawable.button_game));
 
         buttonClicked = true;
         isSetQuestion = true;
-        textView.setText(Integer.toString(counter + 1) + ") " + questions[counter]);
+//        animation = AnimationUtils.loadAnimation(this, R.anim.alpha);
+        textView.setText(Html.fromHtml(questions[counter]));
+//        textView.startAnimation(animation);
         progressBar.setProgress(progressStatus);
-        drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
-        textViewTime.setText(getResources().getString(R.string.time) + " " + Double.toString(progressStatus / 10));
-        textViewPoint.setText(Integer.toString(point) + " " + getResources().getString(R.string.point));
-        btnAnswer1.setText("...");
-        btnAnswer2.setText("...");
-        btnAnswer3.setText("...");
-        btnAnswer4.setText("...");
+//        drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
+        textViewTime.setText(Double.toString(progressStatus / 10));
+        textViewPoint.setText(Integer.toString(point));
+        textViewNumber.setText(Integer.toString(counter + 1) + " из 5");
+        btnAnswer1.setVisibility(View.INVISIBLE);
+        btnAnswer2.setVisibility(View.INVISIBLE);
+        btnAnswer3.setVisibility(View.INVISIBLE);
+        btnAnswer4.setVisibility(View.INVISIBLE);
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+//                animation = AnimationUtils.loadAnimation(GameActivity.this, R.anim.alpha);
+
+                btnAnswer1.setText(answer1[counter]);
+                btnAnswer2.setText(answer2[counter]);
+                btnAnswer3.setText(answer3[counter]);
+                btnAnswer4.setText(answer4[counter]);
+
+                btnAnswer1.setVisibility(View.VISIBLE);
+                btnAnswer2.setVisibility(View.VISIBLE);
+                btnAnswer3.setVisibility(View.VISIBLE);
+                btnAnswer4.setVisibility(View.VISIBLE);
+
+//                btnAnswer1.startAnimation(animation);
+//                btnAnswer2.startAnimation(animation);
+//                btnAnswer3.startAnimation(animation);
+//                btnAnswer4.startAnimation(animation);
+
+            }
+        }, 1000);
 
         handler.postDelayed(new Runnable() {
             @Override
@@ -188,10 +272,6 @@ public class GameActivity extends ActionBarActivity {
 
                 buttonClicked = false;
                 isSetQuestion = false;
-                btnAnswer1.setText(answer1[counter]);
-                btnAnswer2.setText(answer2[counter]);
-                btnAnswer3.setText(answer3[counter]);
-                btnAnswer4.setText(answer4[counter]);
 
                 new Thread(new Runnable() {
                     public void run() {
@@ -201,15 +281,15 @@ public class GameActivity extends ActionBarActivity {
                             //current value in the text view
                             handler.post(new Runnable() {
                                 public void run() {
-                                    r += 256 / 100;
-                                    b -= 256 / 100;
+//                                    r += 256 / 100;
+//                                    b -= 256 / 100;
                                     progressBar.setProgress(progressStatus);
-                                    drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
+//                                    drawable.setColorFilter(new LightingColorFilter(0xFF000000, Color.rgb(r, g, b)));
                                     if (progressStatus != 0){
-                                        textViewTime.setText(getResources().getString(R.string.time) + " " + Double.toString(progressStatus / 10 + 1));
+                                        textViewTime.setText(Double.toString(progressStatus / 10 + 1));
                                     }
                                     else{
-                                        textViewTime.setText(getResources().getString(R.string.time) + " 0");
+                                        textViewTime.setText("0");
                                     }
                                 }
                             });
@@ -234,7 +314,8 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 1;
             if (answer[counter] != 1) {
-                btnAnswer1.setBackgroundColor(getResources().getColor(R.color.primary_red));
+                btnAnswer1.setBackground(getResources().getDrawable(R.drawable.button_game_red));
+                vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
                 point += progressStatus / 10 + 1;
@@ -242,9 +323,9 @@ public class GameActivity extends ActionBarActivity {
             }
         }
         buttonClicked = true;
-        Log.e("Counter", Integer.toString(counter));
-        Log.e("Point", Integer.toString(userPoint[counter]));
-        Log.e("Answer", Integer.toString(userAnswer[counter]));
+//        Log.e("Counter", Integer.toString(counter));
+//        Log.e("Point", Integer.toString(userPoint[counter]));
+//        Log.e("Answer", Integer.toString(userAnswer[counter]));
     }
     public void onClickAnswer2(View view){
 
@@ -252,7 +333,8 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 2;
             if (answer[counter] != 2) {
-                btnAnswer2.setBackgroundColor(getResources().getColor(R.color.primary_red));
+                btnAnswer2.setBackground(getResources().getDrawable(R.drawable.button_game_red));
+                vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
                 point += progressStatus / 10 + 1;
@@ -260,9 +342,9 @@ public class GameActivity extends ActionBarActivity {
             }
         }
         buttonClicked = true;;
-        Log.e("Counter", Integer.toString(counter));
-        Log.e("Point", Integer.toString(userPoint[counter]));
-        Log.e("Answer", Integer.toString(userAnswer[counter]));
+//        Log.e("Counter", Integer.toString(counter));
+//        Log.e("Point", Integer.toString(userPoint[counter]));
+//        Log.e("Answer", Integer.toString(userAnswer[counter]));
     }
     public void onClickAnswer3(View view){
 
@@ -271,7 +353,8 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 3;
             if (answer[counter] != 3) {
-                btnAnswer3.setBackgroundColor(getResources().getColor(R.color.primary_red));
+                btnAnswer3.setBackground(getResources().getDrawable(R.drawable.button_game_red));
+                vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
                 point += progressStatus / 10 + 1;
@@ -279,9 +362,9 @@ public class GameActivity extends ActionBarActivity {
             }
         }
         buttonClicked = true;;
-        Log.e("Counter", Integer.toString(counter));
-        Log.e("Point", Integer.toString(userPoint[counter]));
-        Log.e("Answer", Integer.toString(userAnswer[counter]));
+//        Log.e("Counter", Integer.toString(counter));
+//        Log.e("Point", Integer.toString(userPoint[counter]));
+//        Log.e("Answer", Integer.toString(userAnswer[counter]));
     }
     public void onClickAnswer4(View view){
 
@@ -289,7 +372,8 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 4;
             if (answer[counter] != 4) {
-                btnAnswer4.setBackgroundColor(getResources().getColor(R.color.primary_red));
+                btnAnswer4.setBackground(getResources().getDrawable(R.drawable.button_game_red));
+                vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
                 point += progressStatus / 10 + 1;
@@ -297,9 +381,17 @@ public class GameActivity extends ActionBarActivity {
             }
         }
         buttonClicked = true;
-        Log.e("Counter", Integer.toString(counter));
-        Log.e("Point", Integer.toString(userPoint[counter]));
-        Log.e("Answer", Integer.toString(userAnswer[counter]));
+//        Log.e("Counter", Integer.toString(counter));
+//        Log.e("Point", Integer.toString(userPoint[counter]));
+//        Log.e("Answer", Integer.toString(userAnswer[counter]));
+    }
+    public void showTips(){
+
+        if (counter == 0){
+
+            Toast.makeText(getBaseContext(), getResources().getString(R.string.tip),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private class GameEnd extends AsyncTask<String, String, String> {
@@ -332,7 +424,7 @@ public class GameActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("point5", Integer.toString(userPoint[4])));
             params.add(new BasicNameValuePair("total", Integer.toString(point)));
 
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST, params, token, sessionId);
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST, params, token, sessionId);
             jsonStr = arrayListResponse[2];
 
             return null;
@@ -353,7 +445,7 @@ public class GameActivity extends ActionBarActivity {
             intent.putExtra("category_name", categoryName);
             intent.putExtra("my_total", Integer.toString(point));
             intent.putExtra("opponent_name", opponentName);
-            intent.putExtra("opponent_avatar", opponentAvatar);
+            intent.putExtra("opponent_avatar", avatar2);
 
             if (jsonStr != null){
 
@@ -418,41 +510,6 @@ public class GameActivity extends ActionBarActivity {
             }
         }
     };
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_game, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d("my_life_cycle", "onPause");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d("my_life_cycle", "onStop");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d("my_life_cycle", "onDestroy");
-    }
 }
 
 

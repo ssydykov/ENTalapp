@@ -21,7 +21,6 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class ResultsListAdapter extends ArrayAdapter<Person> {
 
     List<Person> person;
-    Bitmap bitmap;
     Context context;
 
     public ResultsListAdapter(Context context, List<Person> person) {

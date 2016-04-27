@@ -4,11 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -16,8 +12,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -25,12 +21,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
@@ -42,8 +43,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,21 +54,25 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 public class ResultActivity extends ActionBarActivity {
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/gameresult/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/iwanttoplaywithfriend/";
-    private static String url3 = "http://env-3315080.j.dnr.kz/mainapp/playwithbot/";
-    private static String url4 = "http://env-3315080.j.dnr.kz/mainapp/gameend/";
+    private String urlGlobal;
+    private static String url = "mainapp/gameresult/";
+    private static String url2 = "mainapp/iwanttoplaywithfriend/";
+    private static String url3 = "mainapp/playwithbot/";
+    private static String url4 = "mainapp/gameend/";
 
     JSONObject myResult = null;
     JSONObject message = null;
     JSONArray questionsJSON = null;
 
     Intent intent;
-    Toolbar toolbar;
+//    Toolbar toolbar;
+    Animation animation = null;
     ImageView imageView1, imageView2;
-    Bitmap bitmap;
-    TextView textViewName1, textViewName2, textViewStatus,
-            textViewPoint1, textViewPoint2;
+    Button buttonBack;
+    RelativeLayout buttonShare;
+    TextView textViewName1, textViewName2, textViewStatus, textViewResult,
+            textViewPoint1, textViewPoint2, textViewRating, textViewSubject,
+            textEntalapp;
     ProgressBar progressBar;
     ProgressDialog pDialog;
     String userName, opponentName, opponentTotal, opponentPoint, myTotal, jsonStr,
@@ -75,28 +80,31 @@ public class ResultActivity extends ActionBarActivity {
     String questions[], answer1[], answer2[], answer3[], answer4[],
             q_answer1, q_answer2, q_answer3, q_answer4, q_answer5,
             point1, point2, point3, point4, point5;
-    int right_answer[], queryCount = 0;
-    String token, sessionId, extStorageDirectory;
-    Boolean success = false, query_success;
+    int right_answer[], rating, queryCount = 0;
+    String token, sessionId, language;
+    Boolean success = false, query_success, win = false;
     Context context;
+    LinearLayout linearLayout, linearLayoutRating;
     ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_result);
+        setContentView(R.layout.test_result);
         context = getApplicationContext();
 
         // Intent values:
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
         gameId = intent.getStringExtra("gameId");
         categoryName = intent.getStringExtra("category_name");
         myTotal = intent.getStringExtra("my_total");
         opponentName = intent.getStringExtra("opponent_name");
         avatar2 = intent.getStringExtra("opponent_avatar");
         query_success = intent.getBooleanExtra("query_success", true);
+        getPref();
 
         // Shared preferences values:
         SharedPreferences sharedPreferencesProfile = getSharedPreferences("user", 0);
@@ -111,14 +119,54 @@ public class ResultActivity extends ActionBarActivity {
         textViewName2 = (TextView) findViewById(R.id.textViewName2);
         textViewPoint1 = (TextView) findViewById(R.id.textViewPoint1);
         textViewPoint2 = (TextView) findViewById(R.id.textViewPoint2);
+        textViewRating = (TextView) findViewById(R.id.textViewRating);
+        textViewResult = (TextView) findViewById(R.id.textViewResult);
+        textViewSubject = (TextView) findViewById(R.id.textViewSubject);
+        textEntalapp = (TextView) findViewById(R.id.text_entalapp);
         imageView1 = (ImageView) findViewById(R.id.avatar1);
         imageView2 = (ImageView) findViewById(R.id.avatar2);
+        buttonShare = (RelativeLayout) findViewById(R.id.buttonShare);
+        buttonBack = (Button) findViewById(R.id.buttonBack);
+        linearLayout = (LinearLayout) findViewById(R.id.linear_layout);
+        linearLayoutRating = (LinearLayout) findViewById(R.id.linearLayoutRating);
+
+        linearLayoutRating.setVisibility(View.INVISIBLE);
+        textEntalapp.setVisibility(View.INVISIBLE);
+
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Object activity = MyProfileActivity.class;
+                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra("token", token);
+                intent.putExtra("sessionId", sessionId);
+                startActivity(intent);
+            }
+        });
 
         // Create toolbar:
-        toolbarBuilder();
+//        toolbarBuilder();
 
         // Create status bar:
         statusBarBuilder();
+
+//        toolbar.setTitle(categoryName);
+        textViewPoint1.setText(myTotal);
+        textViewName1.setText(userName);
+        textViewName2.setText(opponentName);
+        textViewSubject.setText(categoryName);
+        textViewPoint2.setText("...");
+
+        Glide.with(context)
+                .load(avatar1)
+                .bitmapTransform(new CropCircleTransformation(context))
+                .into(imageView1);
+        Glide.with(context)
+                .load(avatar2)
+                .bitmapTransform(new CropCircleTransformation(context))
+                .into(imageView2);
 
         if (isNetworkAvailable() && query_success){
 
@@ -136,11 +184,25 @@ public class ResultActivity extends ActionBarActivity {
             point3 = intent.getStringExtra("point3");
             point4 = intent.getStringExtra("point4");
             point5 = intent.getStringExtra("point5");
+
+            new GameEnd().execute();
         }
         else {
 
             progressBar.setVisibility(View.INVISIBLE    );
             textViewStatus.setText(getResources().getString(R.string.connection_error));
+        }
+    }
+
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
         }
     }
 
@@ -151,23 +213,6 @@ public class ResultActivity extends ActionBarActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    private void toolbarBuilder(){
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Object activity = ProfileActivity.class;
-                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intent.putExtra("token", token);
-                intent.putExtra("sessionId", sessionId);
-                startActivity(intent);
-            }
-        });
-    }
     private void statusBarBuilder(){
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -195,7 +240,7 @@ public class ResultActivity extends ActionBarActivity {
             super.onPreExecute();
             // Showing progress dialog
             progressBar.setVisibility(View.VISIBLE);
-            textViewStatus.setText("Передача ваших данных");
+            textViewStatus.setText(getResources().getString(R.string.wait));
         }
 
         @Override
@@ -216,7 +261,7 @@ public class ResultActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("point5", point5));
             params.add(new BasicNameValuePair("total", myTotal));
 
-            String[] arrayListResponse = sh.makeServiceCall(url4, ServiceHandler.POST, params, token, sessionId);
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url4, ServiceHandler.POST, params, token, sessionId);
             jsonStr = arrayListResponse[2];
 
             return null;
@@ -252,7 +297,7 @@ public class ResultActivity extends ActionBarActivity {
             ServiceHandler sh = new ServiceHandler();
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("game_id", gameId));
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST,
                     params, token, sessionId);
             jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
@@ -271,9 +316,12 @@ public class ResultActivity extends ActionBarActivity {
                     categoryName = myResult.getString("category_name");
                     category_id = myResult.getString("category_id");
                     friend_id = myResult.getString("opponent_id");
+                    rating = myResult.getInt("my_pts");
 
+                    Log.e("Success", Boolean.toString(success));
                     if (success){
                         opponentTotal = myResult.getString("opponent_points");
+                        Log.e("Opponent total", opponentTotal);
                     }
                     else {
                         opponentTotal = "...";
@@ -292,7 +340,7 @@ public class ResultActivity extends ActionBarActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            toolbar.setTitle(categoryName);
+//            toolbar.setTitle(categoryName);
             textViewPoint1.setText(myTotal);
             textViewName1.setText(userName);
             textViewName2.setText(opponentName);
@@ -311,25 +359,63 @@ public class ResultActivity extends ActionBarActivity {
 
                 progressBar.setVisibility(View.INVISIBLE);
                 textViewStatus.setText(getResources().getString(R.string.connection_error));
+                textViewStatus.setTextSize(14);
             }
             else if (success && queryCount < 5){
 
                 progressBar.setVisibility(View.INVISIBLE);
+                textViewStatus.setVisibility(View.INVISIBLE);
+                animation = AnimationUtils.loadAnimation(ResultActivity.this, R.anim.alpha);
+
+                textViewRating.setText(Integer.toString(rating));
+                Log.e("My point", myTotal);
+                Log.e("Opponent point", opponentTotal);
                 if (Integer.parseInt(myTotal) > Integer.parseInt(opponentTotal)){
-                    textViewStatus.setText(getResources().getString(R.string.win));
-                    textViewStatus.setTextColor(getResources().getColor(R.color.primary_green));
+
+                    //WIN
+                    linearLayout.setBackground(getResources().getDrawable(R.drawable.card_head_green_shape));
+                    textViewResult.setText(getResources().getString(R.string.win));
+                    textViewPoint1.setTextColor(getResources().getColor(R.color.game_green));
+                    textViewPoint2.setTextColor(getResources().getColor(R.color.game_red));
+                    win = true;
                 }
                 else if (Integer.parseInt(myTotal) < Integer.parseInt(opponentTotal)){
-                    textViewStatus.setText(getResources().getString(R.string.lose));
-                    textViewStatus.setTextColor(getResources().getColor(R.color.primary_red));
+
+                    //LOSE
+                    linearLayout.setBackground(getResources().getDrawable(R.drawable.card_head_red_shape));
+                    textViewResult.setText(getResources().getString(R.string.lose));
+                    textViewPoint1.setTextColor(getResources().getColor(R.color.game_red));
+                    textViewPoint2.setTextColor(getResources().getColor(R.color.game_green));
                 }
                 else {
-                    textViewStatus.setText(getResources().getString(R.string.dead_heat));
-                    textViewStatus.setTextColor(getResources().getColor(R.color.accent));
+
+                    linearLayout.setBackground(getResources().getDrawable(R.drawable.card_head_shape));
+                    textViewResult.setText(getResources().getString(R.string.draw));
+                    textViewPoint1.setTextColor(getResources().getColor(R.color.game_blue));
+                    textViewPoint2.setTextColor(getResources().getColor(R.color.game_blue));
                 }
+                if (rating > 0){
+                    textViewRating.setTextColor(getResources().getColor(R.color.game_green));
+                    textViewRating.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_upward_black_18dp, 0);
+                }
+                else if(rating < 0){
+
+                    textViewRating.setTextColor(getResources().getColor(R.color.game_red));
+                    textViewRating.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_downward_black_18dp, 0);
+                }
+                else {
+
+                    textViewRating.setTextColor(getResources().getColor(R.color.primary_text));
+                    textViewRating.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+                }
+
+                linearLayoutRating.setVisibility(View.VISIBLE);
+                linearLayoutRating.startAnimation(animation);
+                linearLayout.startAnimation(animation);
             }
             else {
 
+                progressBar.setVisibility(View.VISIBLE);
                 textViewStatus.setText(getResources().getString(R.string.wait));
                 Runnable task = new Runnable() {
                     public void run() {
@@ -345,14 +431,16 @@ public class ResultActivity extends ActionBarActivity {
 
                 if (isNetworkAvailable() && queryCount == 5){
 
-                    textViewStatus.setText(getResources().getString(R.string.done));
                     progressBar.setVisibility(View.INVISIBLE);
+                    textViewStatus.setText(getResources().getString(R.string.done));
+                    textViewStatus.setTextSize(15);
                 }
                 else if (!isNetworkAvailable()){
 
                     worker.shutdownNow();
                     progressBar.setVisibility(View.INVISIBLE);
                     textViewStatus.setText(getResources().getString(R.string.connection_error));
+                    textViewStatus.setTextSize(15);
                 }
             }
 
@@ -365,7 +453,7 @@ public class ResultActivity extends ActionBarActivity {
 
             worker.shutdownNow();
             worker.shutdown();
-            Object activity = ProfileActivity.class;
+            Object activity = MyProfileActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
             intent.putExtra("token", token);
             intent.putExtra("sessionId", sessionId);
@@ -396,6 +484,7 @@ public class ResultActivity extends ActionBarActivity {
             return true;
         } else {
             textViewStatus.setText(getResources().getString(R.string.connection_error));
+            textViewStatus.setTextSize(15);
         }
 
         return super.onOptionsItemSelected(item);
@@ -412,7 +501,7 @@ public class ResultActivity extends ActionBarActivity {
             super.onPreExecute();
             // Showing progress dialog
             pDialog = new ProgressDialog(ResultActivity.this);
-            pDialog.setMessage("Please wait...");
+            pDialog.setMessage(getResources().getString(R.string.wait_notification));
             pDialog.setCancelable(false);
             pDialog.show();
         }
@@ -424,13 +513,15 @@ public class ResultActivity extends ActionBarActivity {
 
             params.add(new BasicNameValuePair("category_id", category_id));
             params.add(new BasicNameValuePair("friend_id", friend_id));
+            params.add(new BasicNameValuePair("language", language));
             String[] arrayListResponse;
-            if (friend_id.equals("1")){
-                arrayListResponse = sh.makeServiceCall(url3, ServiceHandler.POST,
+            if (friend_id.equals("1") || friend_id.equals("2") || friend_id.equals("3") || friend_id.equals("4") ||
+                    friend_id.equals("5") || friend_id.equals("6")){
+                arrayListResponse = sh.makeServiceCall(urlGlobal + url3, ServiceHandler.POST,
                         params, token, sessionId);
             }
             else {
-                arrayListResponse = sh.makeServiceCall(url2, ServiceHandler.POST,
+                arrayListResponse = sh.makeServiceCall(urlGlobal + url2, ServiceHandler.POST,
                         params, token, sessionId);
             }
             String jsonStr = arrayListResponse[2];
@@ -482,23 +573,25 @@ public class ResultActivity extends ActionBarActivity {
             super.onPostExecute(result);
             pDialog.dismiss();
 
-            Intent intent = new Intent(getApplicationContext(), ReadyToPlayActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Bundle b = new Bundle();
-            b.putString("token", token);
-            b.putString("sessionId", sessionId);
-            b.putString("game_id", gameId);
-            b.putString("opponent_name", opponentName);
-            b.putString("opponent_avatar", avatar2);
-            b.putString("opponent_point", opponentPoint);
-            b.putStringArray("questions", questions);
-            b.putStringArray("answer1", answer1);
-            b.putStringArray("answer2", answer2);
-            b.putStringArray("answer3", answer3);
-            b.putStringArray("answer4", answer4);
-            b.putIntArray("answer", right_answer);
-            intent.putExtras(b);
-            getApplicationContext().startActivity(intent);
+            if (jsonStr != null) {
+
+                Object activity = ReadyToPlayActivity.class;
+                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra("token", token);
+                intent.putExtra("sessionId", sessionId);
+                intent.putExtra("game_id", gameId);
+                intent.putExtra("opponent_name", opponentName);
+                intent.putExtra("opponent_avatar", avatar2);
+                intent.putExtra("opponent_point", opponentPoint);
+                intent.putExtra("questions", questions);
+                intent.putExtra("answer1", answer1);
+                intent.putExtra("answer2", answer2);
+                intent.putExtra("answer3", answer3);
+                intent.putExtra("answer4", answer4);
+                intent.putExtra("answer", right_answer);
+                startActivity(intent);
+            }
         }
     }
 
@@ -511,67 +604,60 @@ public class ResultActivity extends ActionBarActivity {
         startActivity(intent);
     }
 
+
     public void onClickShare(View view){
 
-        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.win);
-        extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+        textEntalapp.setVisibility(View.VISIBLE);
 
-        saveImageToGallery();
+        String text = "";
+        if (win)
+        {
+            text = "Я выиграл в приложении ENTalapp. Попробуй и ты! " +
+                    "Ссылка play market: https://play.google.com/store/apps/details?id=com.ent.saken2316.entalapp&hl=ru";
+        }
+        else
+        {
+            text = "Я нашел крутое приложение по подготовке к ЕНТ. Попробуй и ты! " +
+                    "Ссылка play market: https://play.google.com/store/apps/details?id=com.ent.saken2316.entalapp&hl=ru";
+        }
+        takeScreenshot(text);
     }
-    private void saveImageToGallery(){
+    private void takeScreenshot(String text) {
+        Date now = new Date();
+        android.text.format.DateFormat.format("yyyy-MM-dd_hh:mm:ss", now);
 
-        try{
+        try {
 
-            File file = new File(extStorageDirectory, "win.png");
-            FileOutputStream outputStream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            // image naming and path  to include sd card  appending name you choose for file
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + now + ".jpg";
+
+            // create bitmap screen capture
+            View v1 = getWindow().getDecorView().getRootView();
+            v1.setDrawingCacheEnabled(true);
+            Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+            v1.setDrawingCacheEnabled(false);
+
+            File imageFile = new File(mPath);
+
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
             outputStream.flush();
             outputStream.close();
+
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("image/*");
+            Uri uri = Uri.fromFile(imageFile);
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.putExtra(Intent.EXTRA_TEXT, text);
+            startActivity(Intent.createChooser(share, "Share to"));
+
+            textEntalapp.setVisibility(View.GONE);
+
+        } catch (Throwable e) {
+            // Several error may come out with file handling or OOM
+            e.printStackTrace();
         }
-        catch (Exception e){
-
-            Log.e("File Output Exception", e.toString());
-        }
-
-        String type = "image/*";
-        String filename = "/win.png";
-        String mediaPath = extStorageDirectory + filename;
-
-        createInstagramIntent(type, mediaPath);
-    }
-    private void createInstagramIntent(String type, String mediaPath){
-
-        // Create the new Intent using the 'Send' action.
-        Intent share = new Intent(Intent.ACTION_SEND);
-
-//        Intent shareIntent = new Intent(
-//                android.content.Intent.ACTION_SEND);
-//        shareIntent.setType("image/*");
-//        shareIntent.putExtra(Intent.EXTRA_STREAM,
-//                getImageUri(HomeActivity.this, result));
-//        shareIntent.putExtra(Intent.EXTRA_SUBJECT, sharename);
-//        shareIntent.putExtra(
-//                Intent.EXTRA_TEXT,
-//                "Check this out, what do you think?"
-//                        + System.getProperty("line.separator")
-//                        + sharedescription);
-//        shareIntent.setPackage("com.instagram.android");
-//        startActivity(shareIntent);
-
-        // Set the MIME type
-        share.setType(type);
-
-        // Create the URI from the media
-        File media = new File(mediaPath);
-        Uri uri = Uri.fromFile(media);
-
-        // Add the URI to the Intent.
-        share.putExtra(Intent.EXTRA_STREAM, uri);
-        share.putExtra(Intent.EXTRA_TEXT, "Hello, Entallap");
-//        share.setPackage("com.instagram.android");
-
-        // Broadcast the Intent.
-        startActivity(Intent.createChooser(share, "Share to"));
     }
 
 }

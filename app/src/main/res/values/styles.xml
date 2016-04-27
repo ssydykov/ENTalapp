@@ -16,17 +16,29 @@
     <color name="Blue">#BBDEFB</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+    <color name="point">#4C89F1</color>
+
+    <color name="fb">#4C66A3</color>
+    <color name="vk">#155E8B</color>
+    <color name="gmail">#E04C40</color>
 
     <color name="accent">#FFC107</color>
     <color name="dark_primary">#0097A7</color>
     <color name="primary">#00BCD4</color>
     <color name="light_primary">#B2EBF2</color>
-    <color name="primary_red">#F44336</color>
-    <color name="primary_green">#4CAF50</color>
+    <color name="primary_red">#E84C3D</color>
+    <color name="primary_green">#D6EAAF</color>
+    <color name="light_red">#FFCDD2</color>
+    <color name="light_green">#C8E6C9</color>
+    <color name="light_accent">#FFECB3</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#727272</color>
     <color name="divider">#B6B6B6</color>
 
+    <color name="game_background">#9AE8F2</color>
+    <color name="game_blue">#32B5EF</color>
+    <color name="game_green">#A0E161</color>
+    <color name="game_red">#E74C3C</color>
 
     <!-- Material DEFAULT colors -->
     <color name="material_drawer_primary">#00BCD4</color>
@@ -61,5 +73,9 @@
     <color name="material_drawer_dark_selected">#202020</color>
     <color name="material_drawer_dark_selected_text">@color/material_drawer_primary</color>
     <color name="material_drawer_dark_header_selection_text">#FFF</color>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
 </resources>

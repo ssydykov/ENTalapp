@@ -2,13 +2,13 @@ package com.ent.saken2316.entalapp.Activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -19,6 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
@@ -28,7 +29,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -39,18 +39,18 @@ public class ThrobberActivity extends ActionBarActivity {
 
     ProgressBar progressBar;
     Intent intent;
-    String token, sessionId;
-    Integer categoryId;
+    String token, sessionId, categoryId;
     Handler handler;
     JSONArray questionsJSON = null;
     JSONObject message = null;
     TextView throbberText;
-    Button button1, button2;
+    Button button1;
     Context context;
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/addtopool/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/killsearch/";
-    private static String url3 = "http://env-3315080.j.dnr.kz/mainapp/playwithbot/";
+    private String urlGlobal;
+    private static String url = "mainapp/addtopool/";
+    private static String url2 = "mainapp/killsearch/";
+    private static String url3 = "mainapp/playwithbot/";
 
     private static final String TAG_MESSAGE = "message";
     private static final String TAG_SUCCESS = "success";
@@ -67,9 +67,9 @@ public class ThrobberActivity extends ActionBarActivity {
     private static final String TAG_ANSWER = "correct_answer";
 
     Boolean success = false, isThrobber = true, isQuery = false, isBot = false;
-    String gameID, opponentName, opponentAvatar, opponentPoint, categoryName;
+    String gameID, opponentName, opponentAvatar, opponentPoint, categoryName, language;
     String questions[], answer1[], answer2[], answer3[], answer4[];
-    int answer[];
+    int answer[], queryCounter = 0;
     ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
 
     @Override
@@ -84,20 +84,32 @@ public class ThrobberActivity extends ActionBarActivity {
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
-        categoryId = intent.getIntExtra("categoryId", 0);
+        categoryId = intent.getStringExtra("categoryId");
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
         categoryName = intent.getStringExtra("category_name");
+        getPref();
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
         throbberText = (TextView) findViewById(R.id.throbberText);
-        button1 = (Button) findViewById(R.id.btnBot);
-        button2 = (Button) findViewById(R.id.btnStop);
+        button1 = (Button) findViewById(R.id.btnStop);
         button1.setVisibility(View.INVISIBLE);
-        button2.setVisibility(View.INVISIBLE);
 
         createStatusBar();
 
         new GetQuestions(context, url).execute();
+    }
+
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
     }
 
     private void createStatusBar(){
@@ -132,7 +144,6 @@ public class ThrobberActivity extends ActionBarActivity {
         protected void onCancelled() {
 
             Log.i("Http Response:", "Aborted");
-
         }
 
         @Override
@@ -140,8 +151,14 @@ public class ThrobberActivity extends ActionBarActivity {
 
             ServiceHandler sh = new ServiceHandler();
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("category_id", categoryId.toString()));
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
+            params.add(new BasicNameValuePair("category_id", categoryId));
+            params.add(new BasicNameValuePair("language", language));
+            if (isBot){
+                params.add(new BasicNameValuePair("friend_id", "0"));
+                Log.e("Friend id", "0");
+                Log.e("Category id", categoryId);
+            }
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST,
                     params, token, sessionId);
             String jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
@@ -194,10 +211,10 @@ public class ThrobberActivity extends ActionBarActivity {
 
             isQuery = true;
             button1.setVisibility(View.VISIBLE);
-            button2.setVisibility(View.VISIBLE);
             throbberText.setText(getResources().getString(R.string.search_opponent));
-            if (!success && isThrobber)
+            if (!success && isThrobber && queryCounter < 1)
             {
+                queryCounter++;
                 Runnable task = new Runnable() {
                     public void run() {
                         new GetQuestions(context, url).execute();
@@ -228,16 +245,12 @@ public class ThrobberActivity extends ActionBarActivity {
                 intent.putExtras(b);
                 context.startActivity(intent);
             }
-        }
-    }
-    public static String encodeToBase64(Bitmap _image) {
-        Bitmap image = _image;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] b = baos.toByteArray();
-        String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+            else {
 
-        return imageEncoded;
+                onBot();
+                queryCounter = 0;
+            }
+        }
     }
     public void onClickStop(View view){
 
@@ -250,7 +263,7 @@ public class ThrobberActivity extends ActionBarActivity {
                     Toast.LENGTH_SHORT).show();
         }
     }
-    public void onClickBot(View view){
+    public void onBot(){
 
         isBot = true;
         worker.shutdownNow();
@@ -294,8 +307,8 @@ public class ThrobberActivity extends ActionBarActivity {
 
             ServiceHandler sh = new ServiceHandler();
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("category_id", categoryId.toString()));
-            String[] arrayListResponse2 = sh.makeServiceCall(url2, ServiceHandler.POST,
+            params.add(new BasicNameValuePair("category_id", categoryId));
+            String[] arrayListResponse2 = sh.makeServiceCall(urlGlobal + url2, ServiceHandler.POST,
                     params, token, sessionId);
             String jsonStr = arrayListResponse2[2];
             Log.e("Response: ", "> " + jsonStr);
@@ -385,7 +398,6 @@ public class ThrobberActivity extends ActionBarActivity {
                 context.startActivity(intent);
             }
             else {
-                isBot = false;
                 new GetQuestions(context, url3).execute();
             }
 

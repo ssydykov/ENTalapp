@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -17,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 
@@ -33,7 +35,8 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 public class ReadyToPlayActivity extends AppCompatActivity {
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/answertochallenge/";
+    private String urlGlobal;
+    private static String url = "mainapp/answertochallenge/";
 
     JSONObject message = null;
     JSONArray questionsJSON = null;
@@ -70,6 +73,8 @@ public class ReadyToPlayActivity extends AppCompatActivity {
         usernameop = (TextView) findViewById(R.id.usernameop);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         button = (Button) findViewById(R.id.button);
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
+        getPref();
 
         if (isNotification){
 
@@ -98,6 +103,18 @@ public class ReadyToPlayActivity extends AppCompatActivity {
             answer = intent.getIntArrayExtra("answer");
 
             new GetInfo().execute();
+        }
+    }
+
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
         }
     }
 
@@ -145,7 +162,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
             params.add(new BasicNameValuePair("answer", "2"));
             params.add(new BasicNameValuePair("game_id", gameID));
             Log.e("TOKEN", token);
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST,
                     params, token, sessionId);
             String jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
@@ -196,7 +213,7 @@ public class ReadyToPlayActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            progressBar.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.GONE);
             button.setVisibility(View.VISIBLE);
 
             SharedPreferences sharedPreferences = getSharedPreferences("user", 0);

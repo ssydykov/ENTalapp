@@ -19,12 +19,15 @@
             android:layout_weight="1">
 
             <ProgressBar
-                style="?android:progressBarStyleSmall"
-                android:indeterminate="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="?android:progressBarStyle"
                 android:layout_gravity="center_horizontal"
-                android:id="@+id/progressBar" />
+                android:id="@+id/progressBar"
+                android:layout_height="150dp"
+                android:layout_width="150dp"
+                android:layout_centerInParent="true"
+
+                android:indeterminate="true"
+                android:indeterminateDrawable="@drawable/progress_bar"/>
 
         </LinearLayout>
         <LinearLayout
@@ -38,21 +41,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:layout_gravity="center"
                 android:textSize="15sp"
                 android:id="@+id/throbberText"
                 android:text="@string/connection_to_server"
                 android:textColor="@color/white"/>
 
-            <Button
-                android:layout_width="fill_parent"
-                android:layout_height="45dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/button"
-                android:textColor="@color/white"
-                android:text="Сыграть с ботом"
-                android:id="@+id/btnBot"
-                android:onClick="onClickBot"
-                android:layout_gravity="center" />
+            <!--<Button-->
+                <!--android:layout_width="fill_parent"-->
+                <!--android:layout_height="45dp"-->
+                <!--android:layout_marginTop="10dp"-->
+                <!--android:background="@drawable/button"-->
+                <!--android:textColor="@color/white"-->
+                <!--android:text="Сыграть с ботом"-->
+                <!--android:id="@+id/btnBot"-->
+                <!--android:onClick="onClickBot"-->
+                <!--android:layout_gravity="center" />-->
 
             <Button
                 android:layout_width="fill_parent"
@@ -61,7 +65,7 @@
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/button"
                 android:textColor="@color/white"
-                android:text="Остановить поиск"
+                android:text="@string/stop_execution"
                 android:id="@+id/btnStop"
                 android:onClick="onClickStop"
                 android:layout_gravity="center" />

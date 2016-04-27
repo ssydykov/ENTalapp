@@ -11,9 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary"
-        android:elevation="4dp"
-        android:minHeight="?attr/actionBarSize"
-        android:transitionName="actionBar" />
+        android:minHeight="?attr/actionBarSize"/>
 
     <LinearLayout
         android:orientation="vertical"
@@ -107,6 +105,7 @@
                     android:layout_gravity="center"
                     android:id="@+id/textViewStatus"
                     android:textColor="@color/primary_text"/>
+
                 <LinearLayout
                     android:orientation="horizontal"
                     android:layout_width="fill_parent"
@@ -145,21 +144,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp">
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="6dp">
 
             <Button
                 android:layout_width="fill_parent"
                 android:layout_height="45dp"
-                android:textSize="12sp"
-                android:text="@string/revenge"
-                android:onClick="onClickRevenge"
-                android:background="@drawable/button"
-                android:textColor="@color/white"/>
-
-            <Button
-                android:layout_width="fill_parent"
-                android:layout_height="45dp"
-                android:layout_marginTop="10dp"
                 android:textSize="12sp"
                 android:text="Новая Игра"
                 android:onClick="onClickAnotherGame"
@@ -170,7 +160,19 @@
                 android:layout_width="fill_parent"
                 android:layout_height="45dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
+                android:textSize="12sp"
+                android:text="@string/revenge"
+                android:onClick="onClickRevenge"
+                android:background="@drawable/button"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/buttonShare"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone"
                 android:textSize="12sp"
                 android:text="Поделиться"
                 android:onClick="onClickShare"

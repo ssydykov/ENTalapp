@@ -6,11 +6,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -34,6 +39,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ent.saken2316.entalapp.Adapter.FriendsListAdapter;
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Model.Person;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
@@ -53,15 +59,20 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.FileHandler;
 
 public class FriendsActivity extends AppCompatActivity {
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/getfriends/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/logout/";
-    private static String url3 = "http://env-3315080.j.dnr.kz/mainapp/search/";
+    private String urlGlobal;
+    private static String url = "mainapp/getfriends/";
+    private static String url2 = "mainapp/logout/";
+    private static String url3 = "mainapp/search/";
 
     private boolean isSearchOpened = false;
     String token, sessionId, searchValue, friendId, jsonStr;
@@ -74,7 +85,7 @@ public class FriendsActivity extends AppCompatActivity {
     Button updateButton;
     MenuItem searchAction;
     MenuItem refreshAction;
-    EditText edtSeach;
+    EditText editSearch;
     ProgressDialog pDialog;
     ProgressBar progressBar;
     ListView listViewFriends;
@@ -90,7 +101,8 @@ public class FriendsActivity extends AppCompatActivity {
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
-        Log.e("token", token);
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
+
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         textView = (TextView) findViewById(R.id.textView);
         listViewFriends = (ListView) findViewById(R.id.listViewFriends);
@@ -109,6 +121,9 @@ public class FriendsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        // Get Pref:
+        getPref();
+
         // Create status bar:
         toolbarBuilder();
 
@@ -116,9 +131,32 @@ public class FriendsActivity extends AppCompatActivity {
         drawerBuilder();
 
         // Get Friends:
+        friendsList = ((MyApplication)this.getApplication()).getFriendsList();
+        if (friendsList == null){
+
+            progressBar.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.VISIBLE);
+            listViewFriends.setVisibility(View.INVISIBLE);
+            setRefreshActionButtonState(true);
+        }
+        else{
+
+            setMyFriends();
+        }
         new GetMyFriends().execute();
     }
 
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
+    }
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -154,7 +192,7 @@ public class FriendsActivity extends AppCompatActivity {
                 .withSelectedItem(3)
                 .addDrawerItems(
                         new PrimaryDrawerItem().withName(R.string.drawer_item_user).withIcon(FontAwesome.Icon.faw_user),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_raiting).withIcon(FontAwesome.Icon.faw_list),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_rating).withIcon(FontAwesome.Icon.faw_list),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_games).withIcon(FontAwesome.Icon.faw_gamepad).withIdentifier(1),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_friends).withIcon(FontAwesome.Icon.faw_users),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_about).withIcon(FontAwesome.Icon.faw_info),
@@ -171,7 +209,7 @@ public class FriendsActivity extends AppCompatActivity {
                         if (position == 1)
                         {
                             Context context = getApplicationContext();
-                            Intent intent = new Intent(context, ProfileActivity.class);
+                            Intent intent = new Intent(context, MyProfileActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             Bundle b = new Bundle();
                             b.putString("token", token);
@@ -215,41 +253,29 @@ public class FriendsActivity extends AppCompatActivity {
                 .build();
     }
 
-
     private List<Person> parseJson(String array){
 
         JsonElement jelement = new JsonParser().parse(array);
         JsonObject jo = jelement.getAsJsonObject();
         jo = jo.getAsJsonObject();
         JsonArray ja = jo.getAsJsonArray("message");
-        Log.e("My_jo", jo.toString());
         Gson gson = new Gson();
         Type listType = new TypeToken<List<Person>>(){}.getType();
         List<Person> resultsModels = (List<Person>) gson.fromJson(ja, listType);
-        Log.e("My_result", resultsModels.toString());
+//        Log.e("My_result", resultsModels.toString());
 
         return resultsModels;
     }
-
     private class GetMyFriends extends AsyncTask<String, String, String>{
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            progressBar.setVisibility(View.VISIBLE);
-            textView.setVisibility(View.VISIBLE);
-            listViewFriends.setVisibility(View.INVISIBLE);
-            setRefreshActionButtonState(true);
-        }
         @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.GET,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.GET,
                     null, token, sessionId);
             jsonStr = arrayListResponse[2];
-            Log.e("Response: ", "> " + jsonStr);
+//            Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null)
                 friendsList = parseJson(jsonStr);
@@ -269,27 +295,33 @@ public class FriendsActivity extends AppCompatActivity {
                 listViewFriends.setVisibility(View.INVISIBLE);
                 updateButton.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("Bad internet connection");
+                textView.setText(getResources().getString(R.string.connection_error));
             }
-            else if (friendsList != null) {
+            else if (!friendsList.isEmpty()) {
 
-                listViewFriends.setAdapter(new FriendsListAdapter(FriendsActivity.this, friendsList));
-
-                listViewFriends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        friendId = friendsList.get(position).getId();
-                        showDialog(DIALOG_INVITE);
-                    }
-                });
+                setMyFriends();
             }
             else {
 
                 listViewFriends.setVisibility(View.INVISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("No Friends");
+                textView.setText(getResources().getString(R.string.no_friends));
             }
         }
+    }
+    private void setMyFriends(){
+
+        ((MyApplication) FriendsActivity.this.getApplication()).setFriendsList(friendsList);
+
+        listViewFriends.setAdapter(new FriendsListAdapter(FriendsActivity.this, friendsList));
+
+        listViewFriends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                friendId = friendsList.get(position).getId();
+                showDialog(DIALOG_INVITE);
+            }
+        });
     }
 
     protected Dialog onCreateDialog(int id) {
@@ -305,6 +337,7 @@ public class FriendsActivity extends AppCompatActivity {
         }
         return super.onCreateDialog(id);
     }
+    // Dialog Box:
     DialogInterface.OnClickListener myClickListener = new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
@@ -334,7 +367,7 @@ public class FriendsActivity extends AppCompatActivity {
             super.onPreExecute();
             // Showing progress dialog
             pDialog = new ProgressDialog(FriendsActivity.this);
-            pDialog.setMessage("Logout, Please wait...");
+            pDialog.setMessage(getResources().getString(R.string.wait_logout));
             pDialog.setCancelable(false);
             pDialog.show();
         }
@@ -343,7 +376,7 @@ public class FriendsActivity extends AppCompatActivity {
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
-            sh.makeServiceCall(url2, ServiceHandler.GET,
+            sh.makeServiceCall(urlGlobal + url2, ServiceHandler.GET,
                     null, token, sessionId);
 
             return null;
@@ -362,10 +395,6 @@ public class FriendsActivity extends AppCompatActivity {
             SharedPreferences mPrefs = getSharedPreferences("user", 0);
             SharedPreferences.Editor mEditor = mPrefs.edit();
             mEditor.clear().commit();
-
-            SharedPreferences sharedPreferencesCategories = getSharedPreferences("categories", 0);
-            SharedPreferences.Editor editorCategories = sharedPreferencesCategories.edit();
-            editorCategories.clear().commit();
 
             Object activity = MainActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
@@ -393,7 +422,7 @@ public class FriendsActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            Object activity = ProfileActivity.class;
+            Object activity = MyProfileActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("token", token);
@@ -408,21 +437,51 @@ public class FriendsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh && isNetworkAvailable()) {
+        if (id == R.id.action_refresh) {
 
-            new GetMyFriends().execute();
+            takeScreenshot();
+
             return true;
-        } else if (id == R.id.action_search && isNetworkAvailable()){
+        } else if (id == R.id.action_search){
 
             handleMenuSearch();
             return true;
-        } else {
-
-            Toast.makeText(getBaseContext(), getResources().getString(R.string.oops),
-                    Toast.LENGTH_SHORT).show();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    private void takeScreenshot() {
+        Date now = new Date();
+        android.text.format.DateFormat.format("yyyy-MM-dd_hh:mm:ss", now);
+
+        try {
+
+            // image naming and path  to include sd card  appending name you choose for file
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + now + ".jpg";
+            String text = "Сразись со мной в приложении по подготовке к ЕНТ! " +
+                    "Ссылка play market: https://play.google.com/store/apps/details?id=com.ent.saken2316.entalapp&hl=ru";
+
+            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.logo_promo);
+
+            File imageFile = new File(mPath);
+
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("image/*");
+            Uri uri = Uri.fromFile(imageFile);
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.putExtra(Intent.EXTRA_TEXT, text);
+            startActivity(Intent.createChooser(share, "Share to"));
+
+        } catch (Throwable e) {
+            // Several error may come out with file handling or OOM
+            e.printStackTrace();
+        }
     }
     public void setRefreshActionButtonState(final boolean refreshing) {
         if (optionsMenu != null) {
@@ -467,10 +526,10 @@ public class FriendsActivity extends AppCompatActivity {
             action.setCustomView(R.layout.bar_search);//add the custom view
             action.setDisplayShowTitleEnabled(false); //hide the title
 
-            edtSeach = (EditText)action.getCustomView().findViewById(R.id.edtSearch); //the text editor
+            editSearch = (EditText)action.getCustomView().findViewById(R.id.edtSearch); //the text editor
 
             //this is a listener to do a search when the user clicks on search button
-            edtSeach.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            editSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
                 @Override
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                     if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -483,11 +542,11 @@ public class FriendsActivity extends AppCompatActivity {
             });
 
 
-            edtSeach.requestFocus();
+            editSearch.requestFocus();
 
             //open the keyboard focused in the edtSearch
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(edtSeach, InputMethodManager.SHOW_IMPLICIT);
+            imm.showSoftInput(editSearch, InputMethodManager.SHOW_IMPLICIT);
 
 
             //add the close icon
@@ -520,20 +579,22 @@ public class FriendsActivity extends AppCompatActivity {
             ServiceHandler sh = new ServiceHandler();
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("string", searchValue));
-            Log.e("String", searchValue);
-            String[] arrayListResponse = sh.makeServiceCall(url3, ServiceHandler.POST,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url3, ServiceHandler.POST,
                     params, token, sessionId);
             String jsonStr = arrayListResponse[2];
-            Log.e("Response: ", "> " + jsonStr);
+//            Log.e("Response: ", "> " + jsonStr);
+            if (jsonStr != null) {
 
-            JsonElement jsonElement = new JsonParser().parse(jsonStr);
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
-            jsonObject = jsonObject.getAsJsonObject("message");
+                JsonElement jsonElement = new JsonParser().parse(jsonStr);
+                JsonObject jsonObject = jsonElement.getAsJsonObject();
+                jsonObject = jsonObject.getAsJsonObject("message");
 
-            Gson gson = new Gson();
-            JsonArray jsonArray = jsonObject.getAsJsonArray("users");
-            Type listType = new TypeToken<List<Person>>(){}.getType();
-            searchList = (List<Person>) gson.fromJson(jsonArray, listType);
+                Gson gson = new Gson();
+                JsonArray jsonArray = jsonObject.getAsJsonArray("users");
+                Type listType = new TypeToken<List<Person>>() {
+                }.getType();
+                searchList = (List<Person>) gson.fromJson(jsonArray, listType);
+            }
 
             return null;
         }
@@ -546,7 +607,7 @@ public class FriendsActivity extends AppCompatActivity {
                 listViewFriends.setVisibility(View.INVISIBLE);
                 updateButton.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("Bad internet connection");
+                textView.setText(getResources().getString(R.string.connection_error));
             }
             else if (searchList != null) {
 

@@ -10,6 +10,7 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:id="@+id/linear_layout"
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
@@ -20,18 +21,26 @@
             android:layout_height="fill_parent"
             android:layout_weight="1">
 
-            <TextView
+            <LinearLayout
+                android:orientation="vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_weight="1"
-                android:text="Question"
-                android:gravity="center"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:id="@+id/textView2"
-                android:textColor="@color/primary_text"
-                android:background="@color/white"/>
+                android:background="@color/white">
 
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:text="Question"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:id="@+id/textView"
+                    android:textColor="@color/primary_text"
+                    android:background="@color/white"/>
+
+            </LinearLayout>
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"

@@ -34,7 +34,7 @@
             <Button
                 android:layout_width="fill_parent"
                 android:layout_height="50dp"
-                android:text="Случайный Соперник"
+                android:text="@string/random_opponent"
                 android:onClick="onClickChooseRandom"
                 android:layout_gravity="center"
                 android:background="@drawable/button"
@@ -44,7 +44,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="15dp"
-                android:text="Выбрать из Друзей"
+                android:text="@string/choose_from_friends"
                 android:onClick="onClickChooseFriend"
                 android:layout_gravity="center"
                 android:background="@drawable/button"

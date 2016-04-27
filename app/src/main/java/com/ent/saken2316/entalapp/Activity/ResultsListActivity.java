@@ -4,11 +4,10 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -25,8 +24,9 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.ent.saken2316.entalapp.Model.Person;
 import com.ent.saken2316.entalapp.Adapter.ResultsListAdapter;
+import com.ent.saken2316.entalapp.Model.MyApplication;
+import com.ent.saken2316.entalapp.Model.Person;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 import com.google.gson.Gson;
@@ -62,8 +62,9 @@ public class ResultsListActivity extends ActionBarActivity {
     String jsonStr;
     Button updateButton;
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/getplayedgames/";
-    private static String url2 = "http://env-3315080.j.dnr.kz/mainapp/logout/";
+    private String urlGlobal;
+    private static String url = "mainapp/getplayedgames/";
+    private static String url2 = "mainapp/logout/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,8 @@ public class ResultsListActivity extends ActionBarActivity {
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
-        Log.e("token", token);
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
+        getPref();
 
         // Create tool bar:
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -101,17 +103,35 @@ public class ResultsListActivity extends ActionBarActivity {
             }
         });
 
-        // Get Played Games From Server:
+        // Get My Games:
+        resultsList = ((MyApplication)this.getApplication()).getResultsListFull();
+        if (resultsList == null){
+
+            progressBar.setVisibility(View.VISIBLE);
+            textView.setText(getResources().getString(R.string.connection_to_games));
+            textView.setVisibility(View.VISIBLE);
+            listViewResults.setVisibility(View.INVISIBLE);
+        }
+        else{
+
+            setMyGames();
+        }
         new GetMyGames().execute();
 
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
     }
+
     private void toolbarBuilder(){
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -141,7 +161,7 @@ public class ResultsListActivity extends ActionBarActivity {
                 .withSelectedItem(2)
                 .addDrawerItems(
                         new PrimaryDrawerItem().withName(R.string.drawer_item_user).withIcon(FontAwesome.Icon.faw_user),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_raiting).withIcon(FontAwesome.Icon.faw_list),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_rating).withIcon(FontAwesome.Icon.faw_list),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_games).withIcon(FontAwesome.Icon.faw_gamepad).withIdentifier(1),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_friends).withIcon(FontAwesome.Icon.faw_users),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_about).withIcon(FontAwesome.Icon.faw_info),
@@ -158,7 +178,7 @@ public class ResultsListActivity extends ActionBarActivity {
                         if (position == 1)
                         {
                             Context context = getApplicationContext();
-                            Intent intent = new Intent(context, ProfileActivity.class);
+                            Intent intent = new Intent(context, MyProfileActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             Bundle b = new Bundle();
                             b.putString("token", token);
@@ -219,21 +239,12 @@ public class ResultsListActivity extends ActionBarActivity {
     private class GetMyGames extends AsyncTask<String, String, String> {
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            progressBar.setVisibility(View.VISIBLE);
-            textView.setText(getResources().getString(R.string.connection_to_games));
-            textView.setVisibility(View.VISIBLE);
-            listViewResults.setVisibility(View.INVISIBLE);
-        }
-        @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("size", "50"));
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.POST,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.POST,
                     params, token, sessionId);
             jsonStr = arrayListResponse[2];
             Log.e("Response: ", "> " + jsonStr);
@@ -251,38 +262,46 @@ public class ResultsListActivity extends ActionBarActivity {
 
             if (jsonStr == null){
 
+                listViewResults.setVisibility(View.INVISIBLE);
                 updateButton.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("Bad internet connection");
+                textView.setText(getResources().getString(R.string.connection_error));
             }
-            else if (resultsList != null){
+            else if (!resultsList.isEmpty()){
 
-                listViewResults.setVisibility(View.VISIBLE);
-                textView.setVisibility(View.INVISIBLE);
-
-                listViewResults.setAdapter(new ResultsListAdapter(ResultsListActivity.this, resultsList));
-                listViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        Object activity = ResultActivity.class;
-                        Intent intent = new Intent(getApplicationContext(),
-                                (Class<?>) activity);
-                        intent.putExtra("gameId", resultsList.get(position).getGameId());
-                        intent.putExtra("token", token);
-                        intent.putExtra("sessionId", sessionId);
-                        intent.putExtra("query_success", true);
-                        startActivity(intent);
-                    }
-                });
+                setMyGames();
             }
             else {
 
                 listViewResults.setVisibility(View.INVISIBLE);
                 textView.setVisibility(View.VISIBLE);
-                textView.setText("No Games");
+                textView.setText(getResources().getString(R.string.empty_games));
             }
         }
     }
+    private void setMyGames(){
+
+        ((MyApplication) ResultsListActivity.this.getApplication()).setResultsListFull(resultsList);
+
+        listViewResults.setVisibility(View.VISIBLE);
+        textView.setVisibility(View.INVISIBLE);
+
+        listViewResults.setAdapter(new ResultsListAdapter(ResultsListActivity.this, resultsList));
+        listViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Object activity = ResultActivity.class;
+                Intent intent = new Intent(getApplicationContext(),
+                        (Class<?>) activity);
+                intent.putExtra("gameId", resultsList.get(position).getGameId());
+                intent.putExtra("token", token);
+                intent.putExtra("sessionId", sessionId);
+                intent.putExtra("query_success", true);
+                startActivity(intent);
+            }
+        });
+    }
+
     private class Logout extends AsyncTask<String, String, String> {
 
         @Override
@@ -290,7 +309,7 @@ public class ResultsListActivity extends ActionBarActivity {
             super.onPreExecute();
             // Showing progress dialog
             pDialog = new ProgressDialog(ResultsListActivity.this);
-            pDialog.setMessage("Logout, Please wait...");
+            pDialog.setMessage(getResources().getString(R.string.wait_logout));
             pDialog.setCancelable(false);
             pDialog.show();
         }
@@ -299,7 +318,7 @@ public class ResultsListActivity extends ActionBarActivity {
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
-            String[] arrayListResponse = sh.makeServiceCall(url2, ServiceHandler.GET,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url2, ServiceHandler.GET,
                     null, token, sessionId);
 
             return null;
@@ -329,7 +348,7 @@ public class ResultsListActivity extends ActionBarActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            Object activity = ProfileActivity.class;
+            Object activity = MyProfileActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
             intent.putExtra("token", token);
             intent.putExtra("sessionId", sessionId);

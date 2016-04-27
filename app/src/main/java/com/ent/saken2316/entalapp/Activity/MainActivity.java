@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.ent.saken2316.entalapp.Server.ServiceHandler;
 import com.example.saken2316.entalapp.R;
 import com.facebook.AccessToken;
@@ -57,7 +58,8 @@ public class MainActivity extends ActionBarActivity {
     CallbackManager callbackManager;
     ProgressDialog pDialog;
 
-    private static String url = "http://env-3315080.j.dnr.kz/mainapp/login_sn/";
+    private String urlGlobal;
+    private static String url = "mainapp/login_sn/";
 
     // JSON Node names
     private static final String TAG_MESSAGE = "message";
@@ -77,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this.getApplicationContext();
+        urlGlobal = ((MyApplication)this.getApplication()).getUrl();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -101,11 +104,12 @@ public class MainActivity extends ActionBarActivity {
         {
             Log.e("Hello", "token");
             Log.e("token", token);
-            Intent intent = new Intent(context, ProfileActivity.class);
+            Intent intent = new Intent(context, MyProfileActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             Bundle b = new Bundle();
             b.putString("token", token);
             b.putString("sessionId", sessionId);
+            b.putBoolean("new", true);
             intent.putExtras(b);
             context.startActivity(intent);
         }
@@ -118,6 +122,12 @@ public class MainActivity extends ActionBarActivity {
         LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
+
+                pDialog = new ProgressDialog(MainActivity.this);
+                pDialog.setMessage(getResources().getString(R.string.wait_profile));
+                pDialog.setCancelable(false);
+                pDialog.show();
+
                 AccessToken accessToken = loginResult.getAccessToken();
                 final GraphRequest request = GraphRequest.newMeRequest(accessToken,
                         new GraphRequest.GraphJSONObjectCallback() {
@@ -204,22 +214,13 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        btnRegistration = (Button) findViewById(R.id.btnRegistration);
-        btnRegistration.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Object activity = RegistrationActivity.class;
-                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-                startActivity(intent);
-            }
-        });
         btnLogin = (Button) findViewById(R.id.btnLogin);
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Object activity = LoginActivity.class;
-                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
-                startActivity(intent);
+
+                Toast.makeText(getBaseContext(), "Coming soon",
+                        Toast.LENGTH_SHORT).show();
             }
         });
         btnLoginVK = (Button) findViewById(R.id.btnLoginVk);
@@ -253,6 +254,11 @@ public class MainActivity extends ActionBarActivity {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
             @Override
             public void onResult(VKAccessToken res) {
+
+                pDialog = new ProgressDialog(MainActivity.this);
+                pDialog.setMessage(getResources().getString(R.string.wait_profile));
+                pDialog.setCancelable(false);
+                pDialog.show();
 
                 request = new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "photo_100,sex,city"));
                 request.executeWithListener(new VKRequest.VKRequestListener() {
@@ -345,22 +351,11 @@ public class MainActivity extends ActionBarActivity {
         private VKFB(Context _context){ this.context = _context; }
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            pDialog = new ProgressDialog(MainActivity.this);
-            pDialog.setMessage("Please wait...");
-            pDialog.setCancelable(false);
-            pDialog.show();
-        }
-
-        @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
 
             // Building Parameters
-            Log.e("Error", "catch2");
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("first_name", first_name));
             params.add(new BasicNameValuePair("last_name", last_name));
@@ -369,29 +364,23 @@ public class MainActivity extends ActionBarActivity {
             params.add(new BasicNameValuePair("city", city));
             params.add(new BasicNameValuePair("id_vk", id_vk));
             params.add(new BasicNameValuePair("id_fb", id_fb));
-            Log.e("Error", "catch3");
 
-            Log.e("Vk id", id_vk);
-            Log.e("Fb id", id_fb);
-            Log.e("First name", first_name);
-            Log.e("Last name", last_name);
-            Log.e("Avatar", avatar);
+//            Log.e("Vk id", id_vk);
+//            Log.e("Fb id", id_fb);
+//            Log.e("First name", first_name);
+//            Log.e("Last name", last_name);
+//            Log.e("Avatar", avatar);
 //            Log.e("City", city);
-            Log.e("Friends", friends);
+//            Log.e("Friends", friends);
 
-            Log.e("Error", "catch4");
-            String[] arrayListResponse = sh.makeServiceCall(url, ServiceHandler.SIGNUP,
+            String[] arrayListResponse = sh.makeServiceCall(urlGlobal + url, ServiceHandler.SIGNUP,
                     params, null, null);
-            Log.e("Error", "catch5");
 
             token = arrayListResponse[0];
             sessionId = arrayListResponse[1];
-            Log.e("Error", "catch6");
-            Log.e("token", token);
-            Log.e("session id", sessionId);
             String jsonStr = arrayListResponse[2];
 
-            Log.e("Response: ", "> " + jsonStr);
+//            Log.e("Response: ", "> " + jsonStr);
 
             if (jsonStr != null) {
                 try {
@@ -402,7 +391,6 @@ public class MainActivity extends ActionBarActivity {
 
                     message_text = messages.getString(TAG_TEXT);
                     success = messages.getBoolean(TAG_SUCCESS);
-                    Log.e("Success", Boolean.toString(success));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -421,16 +409,11 @@ public class MainActivity extends ActionBarActivity {
             if (pDialog.isShowing())
                 pDialog.dismiss();
 
-            Log.e("Error", "catch7");
             if (!success) {
-                Log.e("Success", "false");
-                Log.e("sss", Boolean.toString(success));
                 Toast.makeText(getBaseContext(), message_text,
                         Toast.LENGTH_SHORT).show();
             } else {
-                Log.e("Success", "true");
-                Log.e("sss", Boolean.toString(success));
-                Intent intent = new Intent(context, ProfileActivity.class);
+                Intent intent = new Intent(context, MyProfileActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 Bundle b = new Bundle();
                 b.putString("token", token);

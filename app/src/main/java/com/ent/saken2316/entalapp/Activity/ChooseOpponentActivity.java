@@ -1,8 +1,10 @@
 package com.ent.saken2316.entalapp.Activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -10,13 +12,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 
+import com.ent.saken2316.entalapp.Model.MyApplication;
 import com.example.saken2316.entalapp.R;
 
 public class ChooseOpponentActivity extends ActionBarActivity {
 
     Intent intent;
     String token, sessionId;
+    Button buttonBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +47,36 @@ public class ChooseOpponentActivity extends ActionBarActivity {
         intent = getIntent();
         token = intent.getStringExtra("token");
         sessionId = intent.getStringExtra("sessionId");
+
+//        buttonBack = (Button) findViewById(R.id.buttonBack);
+//        buttonBack.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                Object activity = MyProfileActivity.class;
+//                Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                intent.putExtra("token", token);
+//                intent.putExtra("sessionId", sessionId);
+//                intent.putExtra("friend_id", "");
+//                startActivity(intent);
+//            }
+//        });
+
+        getPref();
     }
 
+    private void getPref(){
+
+        SharedPreferences sharedPreferencesSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String language = sharedPreferencesSettings.getString("language", "rus");
+        if (language.equals("rus")){
+            MyApplication.setLocaleRu(getApplicationContext());
+        }
+        else {
+            MyApplication.setLocaleKk(getApplicationContext());
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -88,7 +121,7 @@ public class ChooseOpponentActivity extends ActionBarActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            Object activity = ProfileActivity.class;
+            Object activity = MyProfileActivity.class;
             Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("token", token);
