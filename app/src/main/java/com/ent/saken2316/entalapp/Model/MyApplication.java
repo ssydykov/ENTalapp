@@ -9,6 +9,12 @@ import android.content.res.Configuration;
 import android.util.Base64;
 import android.util.Log;
 
+import com.ent.saken2316.entalapp.Server.AnalyticsTrackers;
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.StandardExceptionParser;
+import com.google.android.gms.analytics.Tracker;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -16,11 +22,19 @@ import java.util.Locale;
 
 public class MyApplication extends Application {
 
+
+    private static MyApplication mInstance;
+
     @Override
     public void onCreate() {
         super.onCreate();
         printKeyHash();
+        mInstance = this;
+
+        AnalyticsTrackers.initialize(this);
+        AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP);
     }
+
     public void printKeyHash() {
         try {
             PackageInfo info = getPackageManager().getPackageInfo("com.ent.saken2316.entalapp", PackageManager.GET_SIGNATURES);
@@ -34,6 +48,48 @@ public class MyApplication extends Application {
         } catch (NoSuchAlgorithmException e) {
 
         }
+    }
+
+    public static synchronized MyApplication getInstance() {
+        return mInstance;
+    }
+
+    public synchronized Tracker getGoogleAnalyticsTracker() {
+        AnalyticsTrackers analyticsTrackers = AnalyticsTrackers.getInstance();
+        return analyticsTrackers.get(AnalyticsTrackers.Target.APP);
+    }
+
+    public void trackScreenView(String screenName) {
+        Tracker t = getGoogleAnalyticsTracker();
+
+        // Set screen name.
+        t.setScreenName(screenName);
+
+        // Send a screen view.
+        t.send(new HitBuilders.ScreenViewBuilder().build());
+
+        GoogleAnalytics.getInstance(this).dispatchLocalHits();
+    }
+
+    public void trackException(Exception e) {
+        if (e != null) {
+            Tracker t = getGoogleAnalyticsTracker();
+
+            t.send(new HitBuilders.ExceptionBuilder()
+                            .setDescription(
+                                    new StandardExceptionParser(this, null)
+                                            .getDescription(Thread.currentThread().getName(), e))
+                            .setFatal(false)
+                            .build()
+            );
+        }
+    }
+
+    public void trackEvent(String category, String action, String label) {
+        Tracker t = getGoogleAnalyticsTracker();
+
+        // Build and send an Event.
+        t.send(new HitBuilders.EventBuilder().setCategory(category).setAction(action).setLabel(label).build());
     }
 
     public static void setLocaleKk(Context context) {

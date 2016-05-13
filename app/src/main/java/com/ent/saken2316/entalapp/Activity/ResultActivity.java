@@ -72,7 +72,7 @@ public class ResultActivity extends ActionBarActivity {
     RelativeLayout buttonShare;
     TextView textViewName1, textViewName2, textViewStatus, textViewResult,
             textViewPoint1, textViewPoint2, textViewRating, textViewSubject,
-            textEntalapp;
+            textRank;
     ProgressBar progressBar;
     ProgressDialog pDialog;
     String userName, opponentName, opponentTotal, opponentPoint, myTotal, jsonStr,
@@ -122,7 +122,7 @@ public class ResultActivity extends ActionBarActivity {
         textViewRating = (TextView) findViewById(R.id.textViewRating);
         textViewResult = (TextView) findViewById(R.id.textViewResult);
         textViewSubject = (TextView) findViewById(R.id.textViewSubject);
-        textEntalapp = (TextView) findViewById(R.id.text_entalapp);
+        textRank = (TextView) findViewById(R.id.textRank);
         imageView1 = (ImageView) findViewById(R.id.avatar1);
         imageView2 = (ImageView) findViewById(R.id.avatar2);
         buttonShare = (RelativeLayout) findViewById(R.id.buttonShare);
@@ -131,7 +131,6 @@ public class ResultActivity extends ActionBarActivity {
         linearLayoutRating = (LinearLayout) findViewById(R.id.linearLayoutRating);
 
         linearLayoutRating.setVisibility(View.INVISIBLE);
-        textEntalapp.setVisibility(View.INVISIBLE);
 
         buttonBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -492,6 +491,14 @@ public class ResultActivity extends ActionBarActivity {
 
     public void onClickRevenge(View view){
 
+        if (win)
+        {
+            MyApplication.getInstance().trackEvent("Result", "New Revenge", "Win");
+        }
+        else
+        {
+            MyApplication.getInstance().trackEvent("Result", "New Revenge", "Lose");
+        }
         new IWantToPlayWithFriend().execute();
     }
     private class IWantToPlayWithFriend extends AsyncTask<String, String, String> {
@@ -597,6 +604,15 @@ public class ResultActivity extends ActionBarActivity {
 
     public void onClickAnotherGame(View view){
 
+        if (win)
+        {
+            MyApplication.getInstance().trackEvent("Result", "New Game", "Win");
+        }
+        else
+        {
+            MyApplication.getInstance().trackEvent("Result", "New Game", "Lose");
+        }
+
         Object activity = ChooseOpponentActivity.class;
         Intent intent = new Intent(getApplicationContext(), (Class<?>) activity);
         intent.putExtra("token", token);
@@ -607,18 +623,20 @@ public class ResultActivity extends ActionBarActivity {
 
     public void onClickShare(View view){
 
-        textEntalapp.setVisibility(View.VISIBLE);
+        textRank.setText("@entalapp");
 
         String text = "";
         if (win)
         {
-            text = "Я выиграл в приложении ENTalapp. Попробуй и ты! " +
-                    "Ссылка play market: https://play.google.com/store/apps/details?id=com.ent.saken2316.entalapp&hl=ru";
+            MyApplication.getInstance().trackEvent("Result", "Share", "Win");
+            text = "Я выиграл в приложении ENTalapp! Попробуй и ты! " +
+                    "Ссылка на скачивание: http://www.entalapp.kz/";
         }
         else
         {
+            MyApplication.getInstance().trackEvent("Result", "Share", "Lose");
             text = "Я нашел крутое приложение по подготовке к ЕНТ. Попробуй и ты! " +
-                    "Ссылка play market: https://play.google.com/store/apps/details?id=com.ent.saken2316.entalapp&hl=ru";
+                    "Ссылка на скачивание: http://www.entalapp.kz/";
         }
         takeScreenshot(text);
     }
@@ -650,9 +668,10 @@ public class ResultActivity extends ActionBarActivity {
             Uri uri = Uri.fromFile(imageFile);
             share.putExtra(Intent.EXTRA_STREAM, uri);
             share.putExtra(Intent.EXTRA_TEXT, text);
-            startActivity(Intent.createChooser(share, "Share to"));
+            share.setPackage("com.instagram.android");
+            startActivity(share);
 
-            textEntalapp.setVisibility(View.GONE);
+            textRank.setText("рейтинг");
 
         } catch (Throwable e) {
             // Several error may come out with file handling or OOM

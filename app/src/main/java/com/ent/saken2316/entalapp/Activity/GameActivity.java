@@ -63,7 +63,7 @@ public class GameActivity extends ActionBarActivity {
 
     String gameID, opponentName, opponentCity, opponentPoint, categoryName, avatar1, avatar2;
     String questions[], answer1[], answer2[], answer3[], answer4[], jsonStr;
-    int progressStatus = 100, counter = 0, point = 0, answer[], userAnswer[], userPoint[];
+    int progressStatus = 200, counter = 0, point = 0, answer[], userAnswer[], userPoint[];
     int DIALOG_FINISH = 1;
     boolean isProgress = true, buttonClicked = false, isInternet, isSetQuestion = true;
 
@@ -134,7 +134,7 @@ public class GameActivity extends ActionBarActivity {
         imageViewTip = (ImageView) findViewById(R.id.imageTip);
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar2);
-        progressBar.setMax(100);
+        progressBar.setMax(200);
 //        drawable = progressBar.getProgressDrawable();
 
         Glide.with(context)
@@ -161,7 +161,7 @@ public class GameActivity extends ActionBarActivity {
                     counter++;
                     r = 0;
                     b = 256;
-                    progressStatus = 100;
+                    progressStatus = 200;
                     isProgress = true;
                     buttonClicked = false;
                     setQuestion();
