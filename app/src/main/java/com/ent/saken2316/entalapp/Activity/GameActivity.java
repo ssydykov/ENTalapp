@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -19,6 +21,7 @@ import android.support.v7.app.AlertDialog;
 import android.text.Html;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -60,6 +63,7 @@ public class GameActivity extends ActionBarActivity {
     Animation animation = null;
     Vibrator vibrator;
     Context context;
+    AudioManager audio;
 
     String gameID, opponentName, opponentCity, opponentPoint, categoryName, avatar1, avatar2;
     String questions[], answer1[], answer2[], answer3[], answer4[], jsonStr;
@@ -78,6 +82,7 @@ public class GameActivity extends ActionBarActivity {
         context = getApplicationContext();
         vibrator = (Vibrator) this.context.getSystemService(Context.VIBRATOR_SERVICE);
         urlGlobal = ((MyApplication)this.getApplication()).getUrl();
+        audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -314,10 +319,40 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 1;
             if (answer[counter] != 1) {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.wrong);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 btnAnswer1.setBackground(getResources().getDrawable(R.drawable.button_game_red));
                 vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.correct);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 point += progressStatus / 10 + 1;
                 userPoint[counter] = progressStatus / 10 + 1;
             }
@@ -333,10 +368,40 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 2;
             if (answer[counter] != 2) {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.wrong);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 btnAnswer2.setBackground(getResources().getDrawable(R.drawable.button_game_red));
                 vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.correct);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 point += progressStatus / 10 + 1;
                 userPoint[counter] = progressStatus / 10 + 1;
             }
@@ -353,10 +418,40 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 3;
             if (answer[counter] != 3) {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.wrong);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 btnAnswer3.setBackground(getResources().getDrawable(R.drawable.button_game_red));
                 vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.correct);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 point += progressStatus / 10 + 1;
                 userPoint[counter] = progressStatus / 10 + 1;
             }
@@ -372,10 +467,40 @@ public class GameActivity extends ActionBarActivity {
             isProgress = false;
             userAnswer[counter] = 4;
             if (answer[counter] != 4) {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.wrong);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 btnAnswer4.setBackground(getResources().getDrawable(R.drawable.button_game_red));
                 vibrator.vibrate(250);
                 userPoint[counter] = 0;
             } else {
+                switch (audio.getRingerMode())
+                {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), R.raw.correct);
+                        mp.start();
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        // Device is on Silent mode.
+                        // you should not play sound now.
+                        break;
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        // Device is on Vibrate/Meeting mode.
+                        // you should not play sound but you can make vibrate device (if you want).
+                        break;
+                }
                 point += progressStatus / 10 + 1;
                 userPoint[counter] = progressStatus / 10 + 1;
             }
