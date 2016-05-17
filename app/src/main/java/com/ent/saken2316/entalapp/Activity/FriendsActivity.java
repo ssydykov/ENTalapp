@@ -195,6 +195,7 @@ public class FriendsActivity extends AppCompatActivity {
                         new PrimaryDrawerItem().withName(R.string.drawer_item_rating).withIcon(FontAwesome.Icon.faw_list),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_games).withIcon(FontAwesome.Icon.faw_gamepad).withIdentifier(1),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_friends).withIcon(FontAwesome.Icon.faw_users),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_challenges).withIcon(FontAwesome.Icon.faw_bell),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_about).withIcon(FontAwesome.Icon.faw_info),
 //                        new SectionDrawerItem().withName(R.string.drawer_item_settings),
 //                        new SecondaryDrawerItem().withName(R.string.drawer_item_help).withIcon(FontAwesome.Icon.faw_cog),
@@ -206,8 +207,7 @@ public class FriendsActivity extends AppCompatActivity {
                     //  ????????? ?????
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id, IDrawerItem drawerItem) {
 
-                        if (position == 1)
-                        {
+                        if (position == 1) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, MyProfileActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -216,6 +216,11 @@ public class FriendsActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
+                        }
+                        else if (position == 0)
+                        {
+                            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.entalapp.kz/"));
+                            startActivity(intent);
                         } else if (position == 2) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, RankingActivity.class);
@@ -225,7 +230,7 @@ public class FriendsActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        }  else if (position == 3) {
+                        } else if (position == 3) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, ResultsListActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -234,9 +239,16 @@ public class FriendsActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        }
-                        else if (position == 5)
-                        {
+                        } else if (position == 5) {
+                            Context context = getApplicationContext();
+                            Intent intent = new Intent(context, ChallengesActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            Bundle b = new Bundle();
+                            b.putString("token", token);
+                            b.putString("sessionId", sessionId);
+                            intent.putExtras(b);
+                            context.startActivity(intent);
+                        } else if (position == 6) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, InfoActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -245,7 +257,7 @@ public class FriendsActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        } else if (position == 7){
+                        } else if (position == 8) {
                             new Logout().execute();
                         }
                     }

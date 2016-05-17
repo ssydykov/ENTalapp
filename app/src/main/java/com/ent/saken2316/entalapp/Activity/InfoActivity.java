@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -118,12 +119,13 @@ public class InfoActivity extends AppCompatActivity {
                 .withToolbar(toolbar)
                 .withActionBarDrawerToggle(true)
                 .withHeader(R.layout.drawer_header)
-                .withSelectedItem(4)
+                .withSelectedItem(5)
                 .addDrawerItems(
                         new PrimaryDrawerItem().withName(R.string.drawer_item_user).withIcon(FontAwesome.Icon.faw_user),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_rating).withIcon(FontAwesome.Icon.faw_list),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_games).withIcon(FontAwesome.Icon.faw_gamepad).withIdentifier(1),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_friends).withIcon(FontAwesome.Icon.faw_users),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_challenges).withIcon(FontAwesome.Icon.faw_bell),
                         new SecondaryDrawerItem().withName(R.string.drawer_item_about).withIcon(FontAwesome.Icon.faw_info),
 //                        new SectionDrawerItem().withName(R.string.drawer_item_settings),
 //                        new SecondaryDrawerItem().withName(R.string.drawer_item_help).withIcon(FontAwesome.Icon.faw_cog),
@@ -145,6 +147,11 @@ public class InfoActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
+                        }
+                        else if (position == 0)
+                        {
+                            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.entalapp.kz/"));
+                            startActivity(intent);
                         }
                         else if (position == 3)
                         {
@@ -168,6 +175,17 @@ public class InfoActivity extends AppCompatActivity {
                             intent.putExtras(b);
                             context.startActivity(intent);
                         }
+                        else if (position == 5)
+                        {
+                            Context context = getApplicationContext();
+                            Intent intent = new Intent(context, ChallengesActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            Bundle b = new Bundle();
+                            b.putString("token", token);
+                            b.putString("sessionId", sessionId);
+                            intent.putExtras(b);
+                            context.startActivity(intent);
+                        }
                         else if (position == 1)
                         {
                             Context context = getApplicationContext();
@@ -179,7 +197,7 @@ public class InfoActivity extends AppCompatActivity {
                             intent.putExtras(b);
                             context.startActivity(intent);
                         }
-                        else if (position == 7)
+                        else if (position == 8)
                         {
                             new Logout().execute();
                         }

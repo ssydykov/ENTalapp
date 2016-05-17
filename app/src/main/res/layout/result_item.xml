@@ -60,7 +60,6 @@
                     android:layout_marginLeft="16dp"
                     android:gravity="end"
                     android:textSize="12sp"
-                    android:text="21 Июля 2015"
                     android:id="@+id/date"
                     android:textColor="@color/secondary_text" />
 

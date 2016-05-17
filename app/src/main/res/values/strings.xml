@@ -51,7 +51,6 @@
     <string name="drawer_item_logout">Выйти</string>
 
 
-
     // My Profile:
     <string name="title_activity_profile">Мой Профиль</string>
     <string name="wait_profile">Загружаем профиль</string>
@@ -142,5 +141,11 @@
     <string name="empty_text">Пустой текст</string>
     <string name="thanks">Спасибо за Ваш отзыв!</string>
     <string name="error">Ошибка</string>
+
+
+    // Ready to play:
+    <string name="title_activity_challenges">Вызовы</string>
+    <string name="no_challenges">Нет вызовов</string>
+    <string name="accept_challenge">Принять вызов от</string>
 
 </resources>

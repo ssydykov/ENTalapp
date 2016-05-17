@@ -132,6 +132,14 @@ public class MyApplication extends Application {
         this.resultsList = resultsList;
     }
 
+    private List challengesList = null;
+    public List getChallengesList() {
+        return challengesList;
+    }
+    public void setChallengesList(List challengesList) {
+        this.challengesList = challengesList;
+    }
+
     private List rankList = null;
     public List getRankList() {
         return rankList;

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -176,6 +177,7 @@ public class RankingActivity extends AppCompatActivity {
                         new PrimaryDrawerItem().withName(R.string.drawer_item_rating).withIcon(FontAwesome.Icon.faw_list),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_games).withIcon(FontAwesome.Icon.faw_gamepad).withIdentifier(1),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_friends).withIcon(FontAwesome.Icon.faw_users),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_challenges).withIcon(FontAwesome.Icon.faw_bell),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_about).withIcon(FontAwesome.Icon.faw_info),
 //                        new SectionDrawerItem().withName(R.string.drawer_item_settings),
 //                        new SecondaryDrawerItem().withName(R.string.drawer_item_help).withIcon(FontAwesome.Icon.faw_cog),
@@ -197,6 +199,11 @@ public class RankingActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
+                        }
+                        else if (position == 0)
+                        {
+                            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.entalapp.kz/"));
+                            startActivity(intent);
                         } else if (position == 4) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, FriendsActivity.class);
@@ -215,9 +222,16 @@ public class RankingActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        }
-                        else if (position == 5)
-                        {
+                        } else if (position == 5) {
+                            Context context = getApplicationContext();
+                            Intent intent = new Intent(context, ChallengesActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            Bundle b = new Bundle();
+                            b.putString("token", token);
+                            b.putString("sessionId", sessionId);
+                            intent.putExtras(b);
+                            context.startActivity(intent);
+                        } else if (position == 6) {
                             Context context = getApplicationContext();
                             Intent intent = new Intent(context, InfoActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -226,7 +240,7 @@ public class RankingActivity extends AppCompatActivity {
                             b.putString("sessionId", sessionId);
                             intent.putExtras(b);
                             context.startActivity(intent);
-                        } else if (position == 7){
+                        } else if (position == 8){
                             new Logout().execute();
                         }
                     }
