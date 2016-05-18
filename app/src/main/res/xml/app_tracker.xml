@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- End current session if app sleeps for a period of time -->
+    <integer name="ga_sessionTimeout">300</integer>
+
+    <!-- Enable automatic Activity measurement -->
+    <bool name="ga_autoActivityTracking">true</bool>
+
+    <!--  The property id associated with this analytics tracker -->
+    <string name="ga_trackingId">UA-77349329-2</string>
+
+    <string name="ga_sampleFrequency">100.0</string>
+
+    <bool name="ga_reportUncaughtExceptions">true</bool>
+
+    <!--
+      See Project Structure -> Analytics -> Google Analytics -> Learn More
+      to learn more about configuring this file.
+    -->
+
+    <screenName name="com.ent.saken2316.entalapp.Activity.MainActivity">Home Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.MyProfileActivity">Profile Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.CategoriesActivity">Subjects Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ChooseOpponentActivity">Choose Opponent Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.FriendsActivity">Friends Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.GameActivity">Game Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.InfoActivity">Info Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.RankingActivity">Rank Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ReadyToPlayActivity">Ready to play Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ResultActivity">Result Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ResultsListActivity">Results list Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ThrobberActivity">Loading Page</screenName>
+
+</resources>
