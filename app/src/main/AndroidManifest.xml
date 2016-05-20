@@ -94,15 +94,18 @@
             android:screenOrientation="portrait" />
         <activity
             android:name="com.ent.saken2316.entalapp.Activity.InfoActivity"
-            android:label="@string/title_activity_info" />
+            android:label="@string/title_activity_info"
+            android:screenOrientation="portrait" />
 
         <activity
             android:name="com.ent.saken2316.entalapp.Activity.ChallengesActivity"
-            android:label="@string/title_activity_challenges" />
+            android:label="@string/title_activity_challenges"
+            android:screenOrientation="portrait" />
 
         <activity
             android:name="com.ent.saken2316.entalapp.Activity.ReadyToPlayActivity"
-            android:label="@string/title_activity_ready_to_play" />
+            android:label="@string/title_activity_ready_to_play"
+            android:screenOrientation="portrait" />
 
         <receiver
             android:name="com.ent.saken2316.entalapp.Notification.GcmBroadcastReceiver"

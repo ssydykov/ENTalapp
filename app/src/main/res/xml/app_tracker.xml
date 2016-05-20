@@ -30,5 +30,6 @@
     <screenName name="com.ent.saken2316.entalapp.Activity.ResultActivity">Result Page</screenName>
     <screenName name="com.ent.saken2316.entalapp.Activity.ResultsListActivity">Results list Page</screenName>
     <screenName name="com.ent.saken2316.entalapp.Activity.ThrobberActivity">Loading Page</screenName>
+    <screenName name="com.ent.saken2316.entalapp.Activity.ChallengesActivity">Challenges Page</screenName>
 
 </resources>
