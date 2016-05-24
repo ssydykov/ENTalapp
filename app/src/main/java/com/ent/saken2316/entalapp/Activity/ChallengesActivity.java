@@ -135,6 +135,15 @@ public class ChallengesActivity extends AppCompatActivity {
     private class GetChallenges extends AsyncTask<String, String, String> {
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(ChallengesActivity.this);
+            pDialog.setMessage("Загрузка вызовов");
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+        @Override
         protected String doInBackground(String... args) {
 
             ServiceHandler sh = new ServiceHandler();
@@ -153,6 +162,9 @@ public class ChallengesActivity extends AppCompatActivity {
         protected void onPostExecute(final String result) {
             super.onPostExecute(result);
             progressBar.setVisibility(View.INVISIBLE);
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
 
             if (jsonStr == null){
 
@@ -314,6 +326,10 @@ public class ChallengesActivity extends AppCompatActivity {
                 intent.putExtra("answer", right_answer);
                 intent.putExtra("category_name", challengesList.get(item).getCategoryName());
                 startActivity(intent);
+            }
+            else {
+
+                new GetChallenges().execute();
             }
 
         }

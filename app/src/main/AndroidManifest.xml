@@ -96,12 +96,10 @@
             android:name="com.ent.saken2316.entalapp.Activity.InfoActivity"
             android:label="@string/title_activity_info"
             android:screenOrientation="portrait" />
-
         <activity
             android:name="com.ent.saken2316.entalapp.Activity.ChallengesActivity"
             android:label="@string/title_activity_challenges"
             android:screenOrientation="portrait" />
-
         <activity
             android:name="com.ent.saken2316.entalapp.Activity.ReadyToPlayActivity"
             android:label="@string/title_activity_ready_to_play"
@@ -120,6 +118,7 @@
 
         <service android:name="com.ent.saken2316.entalapp.Notification.GCMNotificationIntentService" />
 
+        <activity android:name="com.ent.saken2316.entalapp.Activity.ProfileActivity"></activity>
     </application>
 
 </manifest>

@@ -6,13 +6,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
@@ -457,7 +454,7 @@ public class MyProfileActivity extends ActionBarActivity {
                         .bitmapTransform(new CropCircleTransformation(context))
                         .into(imageViewAvatar);
                 textViewLevel.setText(getResources().getString(R.string.rank) + " " + profile.getTotal_points());
-                textViewPosition.setText(getResources().getString(R.string.position) + " " + profile.getPosition());
+                textViewPosition.setText(getResources().getString(R.string.position) + " " + Integer.toString(Integer.parseInt(profile.getPosition()) + 1));
 
                 SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -466,7 +463,7 @@ public class MyProfileActivity extends ActionBarActivity {
                 editor.putString("full_name", profile.getFirstName() + " " + profile.getLastName());
                 editor.putString("avatar", profile.getAvatar());
                 editor.putString("total", profile.getTotal_points());
-                editor.putString("position", profile.getPosition());
+                editor.putString("position", Integer.toString(Integer.parseInt(profile.getPosition()) + 1));
                 editor.apply();
             }
         }

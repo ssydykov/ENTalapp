@@ -7,6 +7,9 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Person{
 
+    @SerializedName("challenges")
+    private String challenges;
+
     @SerializedName("game_id")
     private String gameId;
 
@@ -69,6 +72,14 @@ public class Person{
 
     @SerializedName("user_id")
     private String userId;
+
+    public String getChallenges() {
+        return challenges;
+    }
+
+    public void setChallenges(String challenges) {
+        this.challenges = challenges;
+    }
 
     public String getLanguage() {
         return language;
